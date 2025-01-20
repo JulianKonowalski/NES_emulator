@@ -4,6 +4,7 @@ using Byte = MOS6502::Byte;
 
 MOS6502::MOS6502() : 
 	mCycles(0),
+	mFetchedData(0),
 	mProgramCounter(0),
 	mStackPointer(0),
 	mAccumulator(0),

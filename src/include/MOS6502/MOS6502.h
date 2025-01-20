@@ -51,18 +51,13 @@ private:
 	void writeMemory(const Byte& data, const Word& address);
 
 	void setFetched(const Byte& data) { mFetchedData = data; }
-	void setX(const Byte& data) { mX = data; }
-	void setY(const Byte& data) { mY = data; }
-	void setFlag(const processorFlag& flag, const bool& value);
 
 	void setAccumulator(const Byte& data) { mAccumulator = data; }
-	void setCarryFlag(const bool& state);
-	void setZeroFlag(const bool& state);
-	void setInterruptFlag(const bool& state);
-	void setDecimalFlag(const bool& state);
-	void setBreakFlag(const bool& state);
-	void setOverflowFlag(const bool& state);
-	void setNegativeFlag(const bool& state);
+	void setX(const Byte& data) { mX = data; }
+	void setY(const Byte& data) { mY = data; }
+
+	void setFlag(const processorFlag& flag, const bool& value);
+
 
 	void setPorcessorStatus(const Byte& status) { mStatusRegister = status; }
 	void addCycles(const unsigned short& cycles) { mCycles += cycles; }
@@ -71,7 +66,7 @@ private:
 
 	OpcodeLUT mOpcodes;
 
-	unsigned int mCycles;
+	unsigned int mCycles; //for counting CPU cycles during operations
 
 	Byte mFetchedData; //temporary register for storing loaded values
 

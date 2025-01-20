@@ -9,6 +9,7 @@ TEST(MOS6502_tests, init) {
 	MOS6502* cpu = new MOS6502();
 
 	ASSERT_EQ(cpu->getCycles(), 0);
+	ASSERT_EQ(cpu->getFetched(), 0);
 	ASSERT_EQ(cpu->getX(), 0);
 	ASSERT_EQ(cpu->getY(), 0);
 	ASSERT_EQ(cpu->getAccumulator(), 0);
