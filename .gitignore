@@ -1,0 +1,8 @@
+# VS Data
+.vs/
+
+# CMake output direcotry
+out/
+
+# Compiler & Linker for MOS6502 assembly
+cc65/
