@@ -16,6 +16,13 @@ public:
 
 	void operator=(const Operation& other) = delete;
 
+
+	virtual void execute(MOS6502& cpu) { /*DO_NOTHING*/ }
+
+protected:
+
+	Operation(void) {}
+
 	void writeMemory(MOS6502& cpu, const Byte& data, const Word& address);
 	void pushStack(MOS6502& cpu, const Byte& data);
 	void addCpuCycles(MOS6502& cpu, const unsigned short& cycles);
@@ -29,10 +36,6 @@ public:
 	Byte fetchByte(MOS6502& cpu, const Word& address);
 	Byte fetchStack(MOS6502& cpu);
 
-	virtual void execute(MOS6502& cpu) { /*DO_NOTHING*/ }
-
-protected:
-	Operation(void) {}
 };
 
 

@@ -4,18 +4,13 @@
 #endif // !GTEST
 
 #include <MOS6502/MOS6502.h>
-
-void init(Memory* memory) {
-	//initialise memory
-	(*memory)[0xFFFD] = 0x12;	//reset vector
-	(*memory)[0xFFFC] = 0x00;	//reset vector
-}
+#include "memInit.h"
 
 TEST(AddressingMode_tests, undefinedAddressing) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0x02; //undefined
 
 	cpu->boot(memory);
@@ -31,7 +26,7 @@ TEST(AddressingMode_tests, accumulator) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 
 	cpu->boot(memory);
 	AddressingMode* addressingMode = ACC::getInstance();
@@ -46,7 +41,7 @@ TEST(AddressingMode_tests, implied) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 
 	cpu->boot(memory);
 	AddressingMode* addressingMode = IMP::getInstance();
@@ -61,7 +56,7 @@ TEST(AddressingMode_tests, immediate) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0x02;
 
 	cpu->boot(memory);
@@ -77,7 +72,7 @@ TEST(AddressingMode_tests, zeroPage) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory;
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xFF;
 
 	cpu->boot(memory);
@@ -93,7 +88,7 @@ TEST(AddressingMode_tests, zeroPageXNormal) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0x06; //test memory address
@@ -113,7 +108,7 @@ TEST(AddressingMode_tests, zeroPageXWrapped) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0xFF; //test memory address
@@ -133,7 +128,7 @@ TEST(AddressingMode_tests, zeroPageYNormal) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0x06; //test memory address
@@ -153,7 +148,7 @@ TEST(AddressingMode_tests, zeroPageYWrapped) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0xFF; //test memory address
@@ -173,7 +168,7 @@ TEST(AddressingMode_tests, relativePositive) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 4;
 
 	cpu->boot(memory);
@@ -189,7 +184,7 @@ TEST(AddressingMode_tests, relativeNegative) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = -2;
 
 	cpu->boot(memory);
@@ -205,7 +200,7 @@ TEST(AddressingMode_tests, absolute) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0x34; //address' low byte
 	(*memory)[0x1201] = 0x12; //address' high byte
 
@@ -222,7 +217,7 @@ TEST(AddressingMode_tests, absouluteXNormal) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0x01; //address' low byte
@@ -243,7 +238,7 @@ TEST(AddressingMode_tests, absouluteXPageCrossed) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0xFF; //address' low byte
@@ -264,7 +259,7 @@ TEST(AddressingMode_tests, absouluteYNormal) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0x01; //address' low byte
@@ -285,7 +280,7 @@ TEST(AddressingMode_tests, absouluteYPageCrossed) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0xFF; //address' low byte
@@ -306,7 +301,7 @@ TEST(AddressingMode_tests, indirectNormal) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0x34; //indirect low byte
 	(*memory)[0x1201] = 0x12; //indirect high byte
 	(*memory)[0x1234] = 0xCD; //direct low byte
@@ -325,7 +320,7 @@ TEST(AddressingMode_tests, indirectWrapped) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xFF; //indirect low byte
 	(*memory)[0x1201] = 0x13; //indirect high byte
 	(*memory)[0x13FF] = 0xCD; //direct low byte
@@ -344,7 +339,7 @@ TEST(AddressingMode_tests, indirectXNormal) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0x01; //zero page address
@@ -366,7 +361,7 @@ TEST(AddressingMode_tests, indirectXWrapped) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0xFF; //zero page address
@@ -388,7 +383,7 @@ TEST(AddressingMode_tests, indirectYNormal) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0x01; //zero page address
@@ -411,7 +406,7 @@ TEST(AddressingMode_tests, indirectYWrapped) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0xFF; //zero page address
@@ -434,7 +429,7 @@ TEST(AddressingMode_tests, indirectYNormalPageCrossed) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0x01; //zero page address
@@ -457,7 +452,7 @@ TEST(AddressingMode_tests, indirectYWrappedPageCrossed) {
 	MOS6502* cpu = new MOS6502();
 	Memory* memory = new Memory();
 
-	init(memory);
+	memInit(memory);
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0xFF; //zero page address

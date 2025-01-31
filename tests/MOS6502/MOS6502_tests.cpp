@@ -5,6 +5,10 @@
 
 #include <MOS6502/MOS6502.h>
 
+#include "AddressingMode_tests.cpp"
+#include "Operations/LoadStore_tests.cpp"
+#include "Operations/RegisterTransfers_tests.cpp"
+
 TEST(MOS6502_tests, init) {
 	MOS6502* cpu = new MOS6502();
 

@@ -11,16 +11,11 @@ class OpcodeLUT {
 
     friend class MOS6502; //only this class can create an OpcodeLUT object
 
+    using Byte = unsigned char;
+
 private:
 
-    Instruction& operator[](const size_t& code) { 
-        if (code < 0 || 255 < code) {
-            std::string errorMessage("Error: Opcode index out of range with value ");
-            errorMessage += code;
-            throw std::runtime_error(errorMessage);
-        }
-        return mOpcodes[code]; 
-    }
+    Instruction& operator[](const Byte& code) { return mOpcodes[code]; }
 
     Instruction mOpcodes[256] = {
         Instruction("BRK", BRK::getInstance(), IMP::getInstance(), 7),

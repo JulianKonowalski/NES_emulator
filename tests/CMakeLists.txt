@@ -15,7 +15,6 @@ target_link_libraries(GTest::GTest INTERFACE gtest_main)
 set(
 	MOS6502_TEST_SRC
 	${CMAKE_CURRENT_LIST_DIR}/MOS6502/MOS6502_tests.cpp
-	${CMAKE_CURRENT_LIST_DIR}/MOS6502/AddressingMode_tests.cpp
 )
 
 add_executable(

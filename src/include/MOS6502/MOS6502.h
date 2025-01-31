@@ -10,6 +10,7 @@ enum processorFlag {
 	FLAG_INTERRUPT_DISABLE = 1 << 2,
 	FLAG_DECIMAL = 1 << 3,
 	FLAG_BREAK = 1 << 4,
+	FLAG_DEFAULT = 1 << 5,
 	FLAG_OVERFLOW = 1 << 6,
 	FLAG_NEGATIVE = 1 << 7
 };
@@ -30,7 +31,10 @@ public:
 	void executeInstruction(void);
 
 	unsigned int getCycles(void) const { return mCycles; }
+
 	Byte getFetched(void) const { return mFetchedData; }
+	Word getFetchedAddress(void) const { return mFetchedAddress; }
+
 	Byte getX(void) const { return mX; }
 	Byte getY(void) const { return mY; }
 	Byte getAccumulator(void) const { return mAccumulator; }
@@ -51,6 +55,7 @@ private:
 	void writeMemory(const Byte& data, const Word& address);
 
 	void setFetched(const Byte& data) { mFetchedData = data; }
+	void setFetchedAddress(const Word& address) { mFetchedAddress = address; }
 
 	void setAccumulator(const Byte& data) { mAccumulator = data; }
 	void setX(const Byte& data) { mX = data; }
@@ -69,6 +74,7 @@ private:
 	unsigned int mCycles; //for counting CPU cycles during operations
 
 	Byte mFetchedData; //temporary register for storing loaded values
+	Word mFetchedAddress; //temporary register for storing address of a loaded value
 
 	Word mProgramCounter;
 	Byte mStackPointer;

@@ -10,6 +10,7 @@ void Instruction::operator=(const Instruction& other) {
 }
 
 void Instruction::fetchData(MOS6502& cpu, const Word& address) {
+	cpu.setFetchedAddress(address);
 	if (mAddressingMode != IMP::getInstance()) { cpu.setFetched(cpu.fetchByte(address)); }
 	else { cpu.setFetched(cpu.getAccumulator()); }
 }
