@@ -4,6 +4,7 @@
 #endif // !GTEST
 
 #include <MOS6502/MOS6502.h>
+#include <Memory/Memory.h>
 #include "../memInit.h"
 
 TEST(LoadStore_tests, opLDA) {
@@ -11,10 +12,10 @@ TEST(LoadStore_tests, opLDA) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA9;
 	(*memory)[0x1201] = 10;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	ASSERT_EQ(cpu->getAccumulator(), 10);
 	ASSERT_EQ(cpu->getProcessorStatus(), processorFlag::FLAG_DEFAULT);
@@ -40,10 +41,10 @@ TEST(LoadStore_tests, opLDX) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA2;
 	(*memory)[0x1201] = 10;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	ASSERT_EQ(cpu->getX(), 10);
 	ASSERT_EQ(cpu->getProcessorStatus(), processorFlag::FLAG_DEFAULT);
@@ -69,10 +70,10 @@ TEST(LoadStore_tests, opLDY) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0;
 	(*memory)[0x1201] = 10;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	ASSERT_EQ(cpu->getY(), 10);
 	ASSERT_EQ(cpu->getProcessorStatus(), processorFlag::FLAG_DEFAULT);
@@ -98,12 +99,12 @@ TEST(LoadStore_tests, opSTA) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA9;
 	(*memory)[0x1201] = 10;
 	(*memory)[0x1202] = 0x85;
 	(*memory)[0x1203] = 0;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	cpu->executeInstruction();
 	ASSERT_EQ((*memory)[0x0000], 10);
@@ -118,12 +119,12 @@ TEST(LoadStore_tests, opSTX) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA2;
 	(*memory)[0x1201] = 10;
 	(*memory)[0x1202] = 0x86;
 	(*memory)[0x1203] = 0;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	cpu->executeInstruction();
 	ASSERT_EQ((*memory)[0x0000], 10);
@@ -138,12 +139,12 @@ TEST(LoadStore_tests, opSTY) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0;
 	(*memory)[0x1201] = 10;
 	(*memory)[0x1202] = 0x84;
 	(*memory)[0x1203] = 0;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	cpu->executeInstruction();
 	ASSERT_EQ((*memory)[0x0000], 10);

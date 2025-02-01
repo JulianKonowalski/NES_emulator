@@ -12,7 +12,8 @@ void Operation::setCpuX(MOS6502& cpu, Byte value) { cpu.setX(value); }
 void Operation::setCpuY(MOS6502& cpu, Byte value) { cpu.setY(value); }
 void Operation::setCpuAccumulator(MOS6502& cpu, Byte value) { cpu.setAccumulator(value); }
 void Operation::setCpuStatus(MOS6502& cpu, const Byte& status) { cpu.setPorcessorStatus(status); }
-void Operation::setFlag(MOS6502& cpu, const processorFlag& flag, const bool& state) { cpu.setFlag(flag, state); }
+void Operation::setCpuStackPointer(MOS6502& cpu, const Byte& value) { cpu.setStackPointer(value); }
+void Operation::setCpuFlag(MOS6502& cpu, const processorFlag& flag, const bool& state) { cpu.setFlag(flag, state); }
 
 Byte Operation::fetchByte(MOS6502& cpu) { return cpu.fetchByte(); }
 Byte Operation::fetchByte(MOS6502& cpu, const Word& address) { return cpu.fetchByte(address); }
@@ -41,8 +42,8 @@ LDA* LDA::getInstance(void) {
 }
 void LDA::execute(MOS6502& cpu) {
 	Byte data = cpu.getFetched();
-	this->setFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
-	this->setFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)data < 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)data < 0);
 	if (AddressingMode::pageCrossed()) { this->addCpuCycles(cpu, 1); }
 	this->setCpuAccumulator(cpu, data);
 }
@@ -55,8 +56,8 @@ LDX* LDX::getInstance(void) {
 }
 void LDX::execute(MOS6502& cpu) {
 	Byte data = cpu.getFetched();
-	this->setFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
-	this->setFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)data < 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)data < 0);
 	if (AddressingMode::pageCrossed()) { this->addCpuCycles(cpu, 1); }
 	this->setCpuX(cpu, data);
 }
@@ -69,8 +70,8 @@ LDY* LDY::getInstance(void) {
 }
 void LDY::execute(MOS6502& cpu) {
 	Byte data = cpu.getFetched();
-	this->setFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
-	this->setFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)data < 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)data < 0);
 	if (AddressingMode::pageCrossed()) { this->addCpuCycles(cpu, 1); }
 	this->setCpuY(cpu, data);
 }
@@ -116,8 +117,8 @@ TAX* TAX::getInstance(void) {
 }
 void TAX::execute(MOS6502& cpu) {
 	Byte accumulator = cpu.getAccumulator();
-	this->setFlag(cpu, processorFlag::FLAG_ZERO, accumulator == 0);
-	this->setFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)accumulator < 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, accumulator == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)accumulator < 0);
 	this->setCpuX(cpu, accumulator);
 }
 
@@ -129,8 +130,8 @@ TAY* TAY::getInstance(void) {
 }
 void TAY::execute(MOS6502& cpu) {
 	Byte accumulator = cpu.getAccumulator();
-	this->setFlag(cpu, processorFlag::FLAG_ZERO, accumulator == 0);
-	this->setFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)accumulator < 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, accumulator == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)accumulator < 0);
 	this->setCpuY(cpu, accumulator);
 }
 
@@ -142,8 +143,8 @@ TXA* TXA::getInstance(void) {
 }
 void TXA::execute(MOS6502& cpu) {
 	Byte X = cpu.getX();
-	this->setFlag(cpu, processorFlag::FLAG_ZERO, X == 0);
-	this->setFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)X < 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, X == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)X < 0);
 	this->setCpuAccumulator(cpu, X);
 }
 
@@ -155,8 +156,8 @@ TYA* TYA::getInstance(void) {
 }
 void TYA::execute(MOS6502& cpu) {
 	Byte Y = cpu.getY();
-	this->setFlag(cpu, processorFlag::FLAG_ZERO, Y == 0);
-	this->setFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)Y < 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, Y == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)Y < 0);
 	this->setCpuAccumulator(cpu, Y);
 }
 
@@ -170,11 +171,10 @@ TSX* TSX::getInstance(void) {
 	return TSX::sInstance;
 }
 void TSX::execute(MOS6502& cpu) {
-	Byte data = this->fetchStack(cpu);
-	//checkZeroFlag(cpu, data, this);
-	//checkNegativeFlag(cpu, data, this);
+	Byte data = cpu.getStackPointer();
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)data < 0);
 	this->setCpuX(cpu, data);
-
 }
 
 
@@ -184,7 +184,7 @@ TXS* TXS::getInstance(void) {
 	return TXS::sInstance;
 }
 void TXS::execute(MOS6502& cpu) {
-	this->pushStack(cpu, cpu.getX());
+	this->setCpuStackPointer(cpu, cpu.getX());
 }
 
 
@@ -215,8 +215,8 @@ PLA* PLA::getInstance(void) {
 }
 void PLA::execute(MOS6502& cpu) {
 	Byte data = this->fetchStack(cpu);
-	//checkZeroFlag(cpu, data, this);
-	//checkNegativeFlag(cpu, data, this);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)data < 0);
 	this->setCpuAccumulator(cpu, data);
 }
 

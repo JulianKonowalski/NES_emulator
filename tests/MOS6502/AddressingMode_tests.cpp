@@ -11,9 +11,9 @@ TEST(AddressingMode_tests, undefinedAddressing) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
-	(*memory)[0x1200] = 0x02; //undefined
-
 	cpu->boot(memory);
+
+	(*memory)[0x1200] = 0x02; //undefined
 	AddressingMode* addressingMode = UndefinedAddressingMode::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -27,8 +27,8 @@ TEST(AddressingMode_tests, accumulator) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
-
 	cpu->boot(memory);
+
 	AddressingMode* addressingMode = ACC::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -42,8 +42,8 @@ TEST(AddressingMode_tests, implied) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
-
 	cpu->boot(memory);
+
 	AddressingMode* addressingMode = IMP::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -57,9 +57,9 @@ TEST(AddressingMode_tests, immediate) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
-	(*memory)[0x1200] = 0x02;
-
 	cpu->boot(memory);
+
+	(*memory)[0x1200] = 0x02;
 	AddressingMode* addressingMode = IMM::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1200);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -73,9 +73,9 @@ TEST(AddressingMode_tests, zeroPage) {
 	Memory* memory = new Memory;
 
 	memInit(memory);
-	(*memory)[0x1200] = 0xFF;
-
 	cpu->boot(memory);
+
+	(*memory)[0x1200] = 0xFF;
 	AddressingMode* addressingMode = ZP0::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x00FF);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -89,11 +89,11 @@ TEST(AddressingMode_tests, zeroPageXNormal) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0x06; //test memory address
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDX call
 
 	AddressingMode* addressingMode = ZPX::getInstance();
@@ -109,13 +109,12 @@ TEST(AddressingMode_tests, zeroPageXWrapped) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0xFF; //test memory address
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDX call
-
 	AddressingMode* addressingMode = ZPX::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x0003);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -129,13 +128,12 @@ TEST(AddressingMode_tests, zeroPageYNormal) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0x06; //test memory address
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDY call
-
 	AddressingMode* addressingMode = ZPY::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x000A);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -149,13 +147,12 @@ TEST(AddressingMode_tests, zeroPageYWrapped) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0xFF; //test memory address
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDY call
-
 	AddressingMode* addressingMode = ZPY::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x0003);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -169,9 +166,9 @@ TEST(AddressingMode_tests, relativePositive) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
-	(*memory)[0x1200] = 4;
-
 	cpu->boot(memory);
+
+	(*memory)[0x1200] = 4;
 	AddressingMode* addressingMode = REL::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1205);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -185,9 +182,9 @@ TEST(AddressingMode_tests, relativeNegative) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
-	(*memory)[0x1200] = -2;
-
 	cpu->boot(memory);
+
+	(*memory)[0x1200] = -2;
 	AddressingMode* addressingMode = REL::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1200);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -201,10 +198,10 @@ TEST(AddressingMode_tests, absolute) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0x34; //address' low byte
 	(*memory)[0x1201] = 0x12; //address' high byte
-
-	cpu->boot(memory);
 	AddressingMode* addressingMode = ABS::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1234);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -218,14 +215,13 @@ TEST(AddressingMode_tests, absouluteXNormal) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0x01; //address' low byte
 	(*memory)[0x1203] = 0x12; //address' high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDX call
-
 	AddressingMode* addressingMode = ABX::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1205);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -239,14 +235,13 @@ TEST(AddressingMode_tests, absouluteXPageCrossed) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0xFF; //address' low byte
 	(*memory)[0x1203] = 0x12; //address' high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDX call
-
 	AddressingMode* addressingMode = ABX::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1303);
 	ASSERT_TRUE(AddressingMode::pageCrossed());
@@ -260,14 +255,13 @@ TEST(AddressingMode_tests, absouluteYNormal) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0x01; //address' low byte
 	(*memory)[0x1203] = 0x12; //address' high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDY call
-
 	AddressingMode* addressingMode = ABY::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1205);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -281,14 +275,13 @@ TEST(AddressingMode_tests, absouluteYPageCrossed) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0xFF; //address' low byte
 	(*memory)[0x1203] = 0x12; //address' high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDY call
-
 	AddressingMode* addressingMode = ABY::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1303);
 	ASSERT_TRUE(AddressingMode::pageCrossed());
@@ -302,12 +295,12 @@ TEST(AddressingMode_tests, indirectNormal) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0x34; //indirect low byte
 	(*memory)[0x1201] = 0x12; //indirect high byte
 	(*memory)[0x1234] = 0xCD; //direct low byte
 	(*memory)[0x1235] = 0xAB; //direct high byte
-
-	cpu->boot(memory);
 	AddressingMode* addressingMode = IND::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0xABCD);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -321,12 +314,12 @@ TEST(AddressingMode_tests, indirectWrapped) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xFF; //indirect low byte
 	(*memory)[0x1201] = 0x13; //indirect high byte
 	(*memory)[0x13FF] = 0xCD; //direct low byte
 	(*memory)[0x1300] = 0xAB; //direct high byte
-
-	cpu->boot(memory);
 	AddressingMode* addressingMode = IND::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0xABCD);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -340,15 +333,14 @@ TEST(AddressingMode_tests, indirectXNormal) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0x01; //zero page address
 	(*memory)[0x0005] = 0xCD; //direct low byte
 	(*memory)[0x0006] = 0xAB; //direct high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDX call
-
 	AddressingMode* addressingMode = IDX::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0xABCD);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -362,15 +354,14 @@ TEST(AddressingMode_tests, indirectXWrapped) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA2; //LDX Immediate
 	(*memory)[0x1201] = 4; //LDX Argument
 	(*memory)[0x1202] = 0xFF; //zero page address
 	(*memory)[0x0003] = 0xCD; //direct low byte
 	(*memory)[0x0004] = 0xAB; //direct high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDX call
-
 	AddressingMode* addressingMode = IDX::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0xABCD);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -384,16 +375,14 @@ TEST(AddressingMode_tests, indirectYNormal) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0x01; //zero page address
-
 	(*memory)[0x0001] = 0x30; //direct low byte
 	(*memory)[0x0002] = 0x12; //direct high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDY call
-
 	AddressingMode* addressingMode = IDY::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1234);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -407,16 +396,14 @@ TEST(AddressingMode_tests, indirectYWrapped) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0xFF; //zero page address
-
 	(*memory)[0x00FF] = 0x30; //direct low byte
 	(*memory)[0x0000] = 0x12; //direct high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDY call
-
 	AddressingMode* addressingMode = IDY::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1234);
 	ASSERT_FALSE(AddressingMode::pageCrossed());
@@ -430,16 +417,14 @@ TEST(AddressingMode_tests, indirectYNormalPageCrossed) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0x01; //zero page address
-
 	(*memory)[0x0001] = 0xFF; //direct low byte
 	(*memory)[0x0002] = 0x12; //direct high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDY call
-
 	AddressingMode* addressingMode = IDY::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1303);
 	ASSERT_TRUE(AddressingMode::pageCrossed());
@@ -453,16 +438,14 @@ TEST(AddressingMode_tests, indirectYWrappedPageCrossed) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0; //LDY Immediate
 	(*memory)[0x1201] = 4; //LDY Argument
 	(*memory)[0x1202] = 0xFF; //zero page address
-
 	(*memory)[0x00FF] = 0xFF; //direct low byte
 	(*memory)[0x0000] = 0x12; //direct high byte
-
-	cpu->boot(memory);
 	cpu->executeInstruction(); //execute LDY call
-
 	AddressingMode* addressingMode = IDY::getInstance();
 	ASSERT_EQ(addressingMode->getAddress(*cpu), 0x1303);
 	ASSERT_TRUE(AddressingMode::pageCrossed());

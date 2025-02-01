@@ -22,7 +22,7 @@ void MOS6502::boot(Memory* memory) {
 void MOS6502::init(Memory* memory) {
 	mCycles = mAccumulator = mX = mY = 0;
 	mStackPointer = 0xFF;
-	mStatusRegister = Byte(1) << 5; //this bit is always set to 1 according to the documentation
+	mStatusRegister = processorFlag::FLAG_DEFAULT;
 	mMemory = memory;
 }
 
@@ -44,11 +44,11 @@ Byte MOS6502::fetchByte(void) { return (*mMemory)[mProgramCounter++]; }
 Byte MOS6502::fetchByte(const Word& address) { return (*mMemory)[address]; }
 
 Byte MOS6502::fetchStack(void) { 
-	Byte data = (*mMemory)[--mStackPointer]; 
+	Byte data = (*mMemory)[0x0100 + (++mStackPointer)];
 	(*mMemory)[mStackPointer] = 0;
 	return data;
 }
-void MOS6502::pushStack(const Byte& data) { (*mMemory)[mStackPointer++] = data; }
+void MOS6502::pushStack(const Byte& data) { (*mMemory)[ 0x0100 + mStackPointer--] = data; }
 
 void MOS6502::writeMemory(const Byte& data, const Word& address) { (*mMemory)[address] = data; }
 

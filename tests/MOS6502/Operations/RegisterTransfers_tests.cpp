@@ -4,6 +4,7 @@
 #endif // !GTEST
 
 #include <MOS6502/MOS6502.h>
+#include <Memory/Memory.h>
 #include "../memInit.h"
 
 TEST(RegisterTransfers_tests, opTAX) {
@@ -11,11 +12,11 @@ TEST(RegisterTransfers_tests, opTAX) {
 	Memory* memory = new Memory();
 
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA9;
 	(*memory)[0x1201] = 10;
 	(*memory)[0x1202] = 0xAA;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	cpu->executeInstruction();
 	ASSERT_EQ(cpu->getX(), 10);
@@ -46,11 +47,11 @@ TEST(RegisterTransfers_tests, opTAY) {
 	Memory* memory = new Memory();
 	
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA9;
 	(*memory)[0x1201] = 10;
 	(*memory)[0x1202] = 0xA8;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	cpu->executeInstruction();
 	ASSERT_EQ(cpu->getY(), 10);
@@ -81,11 +82,11 @@ TEST(RegisterTransfers_tests, opTXA) {
 	Memory* memory = new Memory();
 	
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA2;
 	(*memory)[0x1201] = 10;
 	(*memory)[0x1202] = 0x8A;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	cpu->executeInstruction();
 	ASSERT_EQ(cpu->getAccumulator(), 10);
@@ -116,11 +117,11 @@ TEST(RegisterTransfers_tests, opTYA) {
 	Memory* memory = new Memory();
 	
 	memInit(memory);
+	cpu->boot(memory);
+
 	(*memory)[0x1200] = 0xA0;
 	(*memory)[0x1201] = 10;
 	(*memory)[0x1202] = 0x98;
-
-	cpu->boot(memory);
 	cpu->executeInstruction();
 	cpu->executeInstruction();
 	ASSERT_EQ(cpu->getAccumulator(), 10);

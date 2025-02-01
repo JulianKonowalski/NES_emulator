@@ -10,7 +10,7 @@ enum processorFlag {
 	FLAG_INTERRUPT_DISABLE = 1 << 2,
 	FLAG_DECIMAL = 1 << 3,
 	FLAG_BREAK = 1 << 4,
-	FLAG_DEFAULT = 1 << 5,
+	FLAG_DEFAULT = 1 << 5, //this bit is always set to 1 according to the documentation
 	FLAG_OVERFLOW = 1 << 6,
 	FLAG_NEGATIVE = 1 << 7
 };
@@ -39,6 +39,7 @@ public:
 	Byte getY(void) const { return mY; }
 	Byte getAccumulator(void) const { return mAccumulator; }
 	Byte getProcessorStatus(void) const { return mStatusRegister; }
+	Byte getStackPointer(void) const { return mStackPointer; }
 	Word getProgramCounter(void) const { return mProgramCounter; }
 
 private:
@@ -54,18 +55,18 @@ private:
 
 	void writeMemory(const Byte& data, const Word& address);
 
+	void addCycles(const unsigned short& cycles) { mCycles += cycles; }
+
 	void setFetched(const Byte& data) { mFetchedData = data; }
 	void setFetchedAddress(const Word& address) { mFetchedAddress = address; }
 
-	void setAccumulator(const Byte& data) { mAccumulator = data; }
 	void setX(const Byte& data) { mX = data; }
 	void setY(const Byte& data) { mY = data; }
+	void setAccumulator(const Byte& data) { mAccumulator = data; }
+	void setStackPointer(const Byte& data) { mStackPointer = data; }
 
 	void setFlag(const processorFlag& flag, const bool& value);
-
-
 	void setPorcessorStatus(const Byte& status) { mStatusRegister = status; }
-	void addCycles(const unsigned short& cycles) { mCycles += cycles; }
 
 	Memory* mMemory;
 
