@@ -25,7 +25,6 @@ protected:
 
 	void writeMemory(MOS6502& cpu, const Byte& data, const Word& address);
 	void pushStack(MOS6502& cpu, const Byte& data);
-	void addCpuCycles(MOS6502& cpu, const unsigned short& cycles);
 	void setCpuX(MOS6502& cpu, Byte value);
 	void setCpuY(MOS6502& cpu, Byte value);
 	void setCpuAccumulator(MOS6502& cpu, Byte value);
