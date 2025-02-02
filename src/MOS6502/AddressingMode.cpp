@@ -10,7 +10,7 @@ void AddressingMode::addCycles(MOS6502& cpu, const unsigned short& cycles) { cpu
 void AddressingMode::setFetched(MOS6502& cpu, const Byte& data) { cpu.setFetched(data); }
 Byte AddressingMode::fetchByte(MOS6502& cpu) { return cpu.fetchByte(); }
 Byte AddressingMode::fetchByte(MOS6502& cpu, const Word& address) { return cpu.fetchByte(address); }
-Word AddressingMode::fetchFromProgramCouner(MOS6502& cpu) { return cpu.mProgramCounter++; } //this is a special case, when the address of data to be loaded is pointed to by the program counter, used only in IMM addressing
+Word AddressingMode::fetchFromProgramCounter(MOS6502& cpu) { return cpu.mProgramCounter++; } //this is a special case, when the address of data to be loaded is pointed to by the program counter, used only in IMM addressing
 
 UndefinedAddressingMode* UndefinedAddressingMode::sInstance = nullptr;
 UndefinedAddressingMode* UndefinedAddressingMode::getInstance(void) {
@@ -49,7 +49,7 @@ IMM* IMM::getInstance(void) {
 }
 Word IMM::getAddress(MOS6502& cpu) {
 	AddressingMode::mPageCrossed = false;
-	return this->fetchFromProgramCouner(cpu);
+	return this->fetchFromProgramCounter(cpu);
 }
 
 ZP0* ZP0::sInstance = nullptr;

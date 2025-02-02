@@ -1,6 +1,7 @@
 #include <MOS6502/Operation.h>
 
 #include <MOS6502/MOS6502.h>
+#include <MOS6502/Instruction.h>
 
 using Byte = Operation::Byte;
 using Word = Operation::Word;
@@ -463,7 +464,18 @@ ASL* ASL::getInstance(void) {
 	return ASL::sInstance;
 }
 void ASL::execute(MOS6502& cpu) {
+	Byte data = cpu.getFetched();
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, data & (1 << 7));
 
+	data <<= 1;
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, data & processorFlag::FLAG_NEGATIVE);
+
+	if (dynamic_cast<ACC*>(Instruction::getAddressingMode())) {
+		this->setCpuAccumulator(cpu, data);
+	} else {
+		this->writeMemory(cpu, data, cpu.getFetchedAddress());
+	}
 }
 
 
@@ -473,7 +485,18 @@ LSR* LSR::getInstance(void) {
 	return LSR::sInstance;
 }
 void LSR::execute(MOS6502& cpu) {
+	Byte data = cpu.getFetched();
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, data & 1);
 
+	data >>= 1;
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, false); //bit 7 is always 0
+
+	if (dynamic_cast<ACC*>(Instruction::getAddressingMode())) {
+		this->setCpuAccumulator(cpu, data);
+	} else {
+		this->writeMemory(cpu, data, cpu.getFetchedAddress());
+	}
 }
 
 
@@ -483,7 +506,21 @@ ROL* ROL::getInstance(void) {
 	return ROL::sInstance;
 }
 void ROL::execute(MOS6502& cpu) {
+	Byte data = cpu.getFetched();
+	Byte newCarry = data & (1 << 7);
 
+	data <<= 1;
+	if (cpu.getProcessorStatus() & processorFlag::FLAG_CARRY) { ++data; }
+
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, newCarry);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, data & processorFlag::FLAG_NEGATIVE);
+
+	if (dynamic_cast<ACC*>(Instruction::getAddressingMode())) {
+		this->setCpuAccumulator(cpu, data);
+	} else {
+		this->writeMemory(cpu, data, cpu.getFetchedAddress());
+	}
 }
 
 
@@ -493,7 +530,21 @@ ROR* ROR::getInstance(void) {
 	return ROR::sInstance;
 }
 void ROR::execute(MOS6502& cpu) {
+	Byte data = cpu.getFetched();
+	Byte newCarry = data & 1;
 
+	data >>= 1;
+	if (cpu.getProcessorStatus() & processorFlag::FLAG_CARRY) { data |= (1 << 7); }
+
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, newCarry);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, data & processorFlag::FLAG_NEGATIVE);
+
+	if (dynamic_cast<ACC*>(Instruction::getAddressingMode())) {
+		this->setCpuAccumulator(cpu, data);
+	} else {
+		this->writeMemory(cpu, data, cpu.getFetchedAddress());
+	}
 }
 
 

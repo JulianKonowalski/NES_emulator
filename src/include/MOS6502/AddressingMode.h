@@ -13,7 +13,7 @@ public:
 	void setFetched(MOS6502& cpu, const Byte& data);
 	Byte fetchByte(MOS6502& cpu);
 	Byte fetchByte(MOS6502& cpu, const Word& address);
-	Word fetchFromProgramCouner(MOS6502& cpu);
+	Word fetchFromProgramCounter(MOS6502& cpu);
 
 	virtual Word getAddress(MOS6502& cpu) = 0;
 	

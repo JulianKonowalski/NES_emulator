@@ -17,6 +17,7 @@ class Instruction {
 
 public:
 	void execute(MOS6502& cpu);
+	static AddressingMode* getAddressingMode(void) { return sAddressingMode; }
 
 private:
 
@@ -42,6 +43,7 @@ private:
 	AddressingMode* mAddressingMode;
 	unsigned short mCycles;
 
+	static AddressingMode* sAddressingMode;
 };
 
 #endif // ! INSTRUCTION_H
