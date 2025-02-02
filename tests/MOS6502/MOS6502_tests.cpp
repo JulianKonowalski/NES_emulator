@@ -13,6 +13,8 @@
 #include "Operations/Stack_tests.cpp"
 #include "Operations/Logical_tests.cpp"
 
+#include "Operations/IncrementsDecrements_tests.cpp"
+
 TEST(MOS6502_tests, init) {
 	MOS6502* cpu = new MOS6502();
 

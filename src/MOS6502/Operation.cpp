@@ -347,7 +347,10 @@ INC* INC::getInstance(void) {
 	return INC::sInstance;
 }
 void INC::execute(MOS6502& cpu) {
-
+	Byte result = cpu.getFetched() + 1;
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
+	this->writeMemory(cpu, result, cpu.getFetchedAddress());
 }
 
 
@@ -357,7 +360,10 @@ INX* INX::getInstance(void) {
 	return INX::sInstance;
 }
 void INX::execute(MOS6502& cpu) {
-
+	Byte result = cpu.getX() + 1;
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
+	this->setCpuX(cpu, result);
 }
 
 
@@ -367,7 +373,10 @@ INY* INY::getInstance(void) {
 	return INY::sInstance;
 }
 void INY::execute(MOS6502& cpu) {
-
+	Byte result = cpu.getY() + 1;
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
+	this->setCpuY(cpu, result);
 }
 
 
@@ -377,7 +386,10 @@ DEC* DEC::getInstance(void) {
 	return DEC::sInstance;
 }
 void DEC::execute(MOS6502& cpu) {
-
+	Byte result = cpu.getFetched() - 1;
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
+	this->writeMemory(cpu, result, cpu.getFetchedAddress());
 }
 
 
@@ -387,7 +399,10 @@ DEX* DEX::getInstance(void) {
 	return DEX::sInstance;
 }
 void DEX::execute(MOS6502& cpu) {
-
+	Byte result = cpu.getX() - 1;
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
+	this->setCpuX(cpu, result);
 }
 
 
@@ -397,7 +412,10 @@ DEY* DEY::getInstance(void) {
 	return DEY::sInstance;
 }
 void DEY::execute(MOS6502& cpu) {
-
+	Byte result = cpu.getY() - 1;
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
+	this->setCpuY(cpu, result);
 }
 
 
