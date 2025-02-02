@@ -280,8 +280,8 @@ void BIT::execute(MOS6502& cpu) {
 	Byte data = cpu.getFetched();
 	Byte result = cpu.getAccumulator() & data;
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
-	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, data & processorFlag::FLAG_NEGATIVE);
 	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, data & processorFlag::FLAG_OVERFLOW);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, data & processorFlag::FLAG_NEGATIVE);
 }
 
 
@@ -294,7 +294,20 @@ ADC* ADC::getInstance(void) {
 	return ADC::sInstance;
 }
 void ADC::execute(MOS6502& cpu) {
+	Byte accumulator = cpu.getAccumulator();
+	Byte data = cpu.getFetched();
+	Byte result = accumulator + data;
+	if (cpu.getProcessorStatus() & processorFlag::FLAG_CARRY) { ++result; }
 
+	//set true if the signs of accumulator and data are the same, but the sign of the result is different
+	bool overflow = ~(accumulator & processorFlag::FLAG_NEGATIVE ^ data & processorFlag::FLAG_NEGATIVE) & 
+					(accumulator & processorFlag::FLAG_NEGATIVE ^ result & processorFlag::FLAG_NEGATIVE);
+
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, (Byte)result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, overflow);
+	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, overflow);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
+	this->setCpuAccumulator(cpu, (Byte)result);
 }
 
 
@@ -303,9 +316,22 @@ SBC* SBC::getInstance(void) {
 	if (!SBC::sInstance) { SBC::sInstance = new SBC(); }
 	return SBC::sInstance;
 }
-void SBC::execute(MOS6502& cpu) {
+void SBC::execute(MOS6502& cpu) { //same as ADC but with the binary ~ of fetched data
+	Byte accumulator = cpu.getAccumulator();
+	Byte data = ~cpu.getFetched();
+	Byte result = accumulator + data;
+	if (cpu.getProcessorStatus() & processorFlag::FLAG_CARRY) { ++result; }
 
-}
+	//set true if the signs of accumulator and data are the same, but the sign of the result is different
+	bool overflow = ~(accumulator & processorFlag::FLAG_NEGATIVE ^ data & processorFlag::FLAG_NEGATIVE) & 
+					(accumulator & processorFlag::FLAG_NEGATIVE ^ result & processorFlag::FLAG_NEGATIVE);
+
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, (Byte)result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, overflow);
+	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, overflow);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
+	this->setCpuAccumulator(cpu, (Byte)result);
+} 
 
 
 CMP* CMP::sInstance = nullptr;
@@ -314,7 +340,10 @@ CMP* CMP::getInstance(void) {
 	return CMP::sInstance;
 }
 void CMP::execute(MOS6502& cpu) {
-
+	Word result = cpu.getAccumulator() - cpu.getFetched();
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, (signed char)result >= 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)result < 0);
 }
 
 
@@ -324,7 +353,10 @@ CPX* CPX::getInstance(void) {
 	return CPX::sInstance;
 }
 void CPX::execute(MOS6502& cpu) {
-
+	Word result = cpu.getX() - cpu.getFetched();
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, (signed char)result >= 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)result < 0);
 }
 
 
@@ -334,7 +366,10 @@ CPY* CPY::getInstance(void) {
 	return CPY::sInstance;
 }
 void CPY::execute(MOS6502& cpu) {
-
+	Word result = cpu.getY() - cpu.getFetched();
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, (signed char)result >= 0);
+	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)result < 0);
 }
 
 
