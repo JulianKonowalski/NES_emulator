@@ -679,7 +679,7 @@ CLC* CLC::getInstance(void) {
 	return CLC::sInstance;
 }
 void CLC::execute(MOS6502& cpu) {
-
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, false);
 }
 
 
@@ -689,7 +689,7 @@ CLD* CLD::getInstance(void) {
 	return CLD::sInstance;
 }
 void CLD::execute(MOS6502& cpu) {
-
+	this->setCpuFlag(cpu, processorFlag::FLAG_DECIMAL, false);
 }
 
 
@@ -699,7 +699,7 @@ CLI* CLI::getInstance(void) {
 	return CLI::sInstance;
 }
 void CLI::execute(MOS6502& cpu) {
-
+	this->setCpuFlag(cpu, processorFlag::FLAG_INTERRUPT_DISABLE, false);
 }
 
 
@@ -709,7 +709,7 @@ CLV* CLV::getInstance(void) {
 	return CLV::sInstance;
 }
 void CLV::execute(MOS6502& cpu) {
-
+	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, false);
 }
 
 
@@ -719,7 +719,7 @@ SEC* SEC::getInstance(void) {
 	return SEC::sInstance;
 }
 void SEC::execute(MOS6502& cpu) {
-
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, true);
 }
 
 
@@ -729,7 +729,7 @@ SED* SED::getInstance(void) {
 	return SED::sInstance;
 }
 void SED::execute(MOS6502& cpu) {
-
+	this->setCpuFlag(cpu, processorFlag::FLAG_DECIMAL, true);
 }
 
 
@@ -739,7 +739,7 @@ SEI* SEI::getInstance(void) {
 	return SEI::sInstance;
 }
 void SEI::execute(MOS6502& cpu) {
-
+	this->setCpuFlag(cpu, processorFlag::FLAG_INTERRUPT_DISABLE, true);
 }
 
 
