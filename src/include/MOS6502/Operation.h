@@ -30,6 +30,7 @@ protected:
 	void setCpuAccumulator(MOS6502& cpu, Byte value);
 	void setCpuStatus(MOS6502& cpu, const Byte& status);
 	void setCpuStackPointer(MOS6502& cpu, const Byte& value);
+	void setCpuProgramCounter(MOS6502& cpu, const Word& value);
 	void setCpuFlag(MOS6502& cpu, const processorFlag& flag, const bool& state);
 
 	Byte fetchByte(MOS6502& cpu);

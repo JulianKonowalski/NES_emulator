@@ -64,6 +64,7 @@ private:
 	void setY(const Byte& data) { mY = data; }
 	void setAccumulator(const Byte& data) { mAccumulator = data; }
 	void setStackPointer(const Byte& data) { mStackPointer = data; }
+	void setProgramCounter(const Word& data) { mProgramCounter = data; }
 
 	void setFlag(const processorFlag& flag, const bool& value);
 	void setPorcessorStatus(const Byte& status) { mStatusRegister = status; }

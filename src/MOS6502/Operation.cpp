@@ -13,7 +13,9 @@ void Operation::setCpuY(MOS6502& cpu, Byte value) { cpu.setY(value); }
 void Operation::setCpuAccumulator(MOS6502& cpu, Byte value) { cpu.setAccumulator(value); }
 void Operation::setCpuStatus(MOS6502& cpu, const Byte& status) { cpu.setPorcessorStatus(status); }
 void Operation::setCpuStackPointer(MOS6502& cpu, const Byte& value) { cpu.setStackPointer(value); }
+void Operation::setCpuProgramCounter(MOS6502& cpu, const Word& value) { cpu.setProgramCounter(value); }
 void Operation::setCpuFlag(MOS6502& cpu, const processorFlag& flag, const bool& state) { cpu.setFlag(flag, state); }
+
 
 Byte Operation::fetchByte(MOS6502& cpu) { return cpu.fetchByte(); }
 Byte Operation::fetchByte(MOS6502& cpu, const Word& address) { return cpu.fetchByte(address); }
@@ -557,7 +559,7 @@ JMP* JMP::getInstance(void) {
 	return JMP::sInstance;
 }
 void JMP::execute(MOS6502& cpu) {
-
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
 
@@ -567,7 +569,10 @@ JSR* JSR::getInstance(void) {
 	return JSR::sInstance;
 }
 void JSR::execute(MOS6502& cpu) {
-
+	Word returnAddress = cpu.getProgramCounter() - 1; //the address stored should be target address - 1
+	this->pushStack(cpu, returnAddress >> 8);
+	this->pushStack(cpu, returnAddress);
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
 
@@ -577,7 +582,9 @@ RTS* RTS::getInstance(void) {
 	return RTS::sInstance;
 }
 void RTS::execute(MOS6502& cpu) {
-
+	Byte lowByte = this->fetchStack(cpu);
+	Word address = (this->fetchStack(cpu) << 8) | lowByte;
+	this->setCpuProgramCounter(cpu, ++address); //the address stored is target address - 1
 }
 
 
