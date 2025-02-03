@@ -29,5 +29,4 @@ void Instruction::execute(MOS6502& cpu) {
 	this->fetchData(cpu, mAddressingMode->getAddress(cpu));
 	mOperation->execute(cpu);
 	cpu.addCycles(mCycles);
-	if (AddressingMode::pageCrossed()) { cpu.addCycles(1); }
 }

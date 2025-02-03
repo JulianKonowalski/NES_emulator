@@ -8,9 +8,10 @@ using Word = Operation::Word;
 
 void Operation::writeMemory(MOS6502& cpu, const Byte& data, const Word& address) { cpu.writeMemory(data, address); }
 void Operation::pushStack(MOS6502& cpu, const Byte& data) { cpu.pushStack(data); }
-void Operation::setCpuX(MOS6502& cpu, Byte value) { cpu.setX(value); }
-void Operation::setCpuY(MOS6502& cpu, Byte value) { cpu.setY(value); }
-void Operation::setCpuAccumulator(MOS6502& cpu, Byte value) { cpu.setAccumulator(value); }
+void Operation::addCycles(MOS6502& cpu, const short& cycles) { cpu.addCycles(cycles); }
+void Operation::setCpuX(MOS6502& cpu, const Byte& value) { cpu.setX(value); }
+void Operation::setCpuY(MOS6502& cpu, const Byte& value) { cpu.setY(value); }
+void Operation::setCpuAccumulator(MOS6502& cpu, const Byte& value) { cpu.setAccumulator(value); }
 void Operation::setCpuStatus(MOS6502& cpu, const Byte& status) { cpu.setPorcessorStatus(status); }
 void Operation::setCpuStackPointer(MOS6502& cpu, const Byte& value) { cpu.setStackPointer(value); }
 void Operation::setCpuProgramCounter(MOS6502& cpu, const Word& value) { cpu.setProgramCounter(value); }
@@ -47,6 +48,7 @@ void LDA::execute(MOS6502& cpu) {
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, data & processorFlag::FLAG_NEGATIVE);
 	this->setCpuAccumulator(cpu, data);
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
 
@@ -60,6 +62,7 @@ void LDX::execute(MOS6502& cpu) {
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, data & processorFlag::FLAG_NEGATIVE);
 	this->setCpuX(cpu, data);
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
 
@@ -73,6 +76,7 @@ void LDY::execute(MOS6502& cpu) {
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, data == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, data & processorFlag::FLAG_NEGATIVE);
 	this->setCpuY(cpu, data);
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
 
@@ -243,6 +247,7 @@ void AND::execute(MOS6502& cpu) {
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
 	this->setCpuAccumulator(cpu, result);
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
 
@@ -257,6 +262,7 @@ void EOR::execute(MOS6502& cpu) {
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
 	this->setCpuAccumulator(cpu, result);
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
 
@@ -271,6 +277,7 @@ void ORA::execute(MOS6502& cpu) {
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
 	this->setCpuAccumulator(cpu, result);
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
 
@@ -311,6 +318,7 @@ void ADC::execute(MOS6502& cpu) {
 	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, overflow);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
 	this->setCpuAccumulator(cpu, (Byte)result);
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
 
@@ -334,6 +342,7 @@ void SBC::execute(MOS6502& cpu) { //same as ADC but with the binary ~ of fetched
 	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, overflow);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
 	this->setCpuAccumulator(cpu, (Byte)result);
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 } 
 
 
@@ -347,6 +356,7 @@ void CMP::execute(MOS6502& cpu) {
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, (signed char)result >= 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, (signed char)result < 0);
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
 
@@ -597,7 +607,10 @@ BCC* BCC::getInstance(void) {
 	return BCC::sInstance;
 }
 void BCC::execute(MOS6502& cpu) {
-
+	if (cpu.getProcessorStatus() & processorFlag::FLAG_CARRY) { return; }
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 2); }
+	else { this->addCycles(cpu, 1); }
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
 
@@ -607,7 +620,10 @@ BCS* BCS::getInstance(void) {
 	return BCS::sInstance;
 }
 void BCS::execute(MOS6502& cpu) {
-
+	if ( !(cpu.getProcessorStatus() & processorFlag::FLAG_CARRY) ) { return; }
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 2); }
+	else { this->addCycles(cpu, 1); }
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
 
@@ -617,7 +633,10 @@ BEQ* BEQ::getInstance(void) {
 	return BEQ::sInstance;
 }
 void BEQ::execute(MOS6502& cpu) {
-
+	if ( !(cpu.getProcessorStatus() & processorFlag::FLAG_ZERO) ) { return; }
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 2); }
+	else { this->addCycles(cpu, 1); }
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
 
@@ -627,7 +646,10 @@ BMI* BMI::getInstance(void) {
 	return BMI::sInstance;
 }
 void BMI::execute(MOS6502& cpu) {
-
+	if ( !(cpu.getProcessorStatus() & processorFlag::FLAG_NEGATIVE) ) { return; }
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 2); }
+	else { this->addCycles(cpu, 1); }
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
 
@@ -637,7 +659,10 @@ BNE* BNE::getInstance(void) {
 	return BNE::sInstance;
 }
 void BNE::execute(MOS6502& cpu) {
-
+	if (cpu.getProcessorStatus() & processorFlag::FLAG_ZERO) { return; }
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 2); }
+	else { this->addCycles(cpu, 1); }
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
 
@@ -647,7 +672,10 @@ BPL* BPL::getInstance(void) {
 	return BPL::sInstance;
 }
 void BPL::execute(MOS6502& cpu) {
-
+	if (cpu.getProcessorStatus() & processorFlag::FLAG_NEGATIVE) { return; }
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 2); }
+	else { this->addCycles(cpu, 1); }
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
 
@@ -657,7 +685,10 @@ BVC* BVC::getInstance(void) {
 	return BVC::sInstance;
 }
 void BVC::execute(MOS6502& cpu) {
-
+	if (cpu.getProcessorStatus() & processorFlag::FLAG_OVERFLOW) { return; }
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 2); }
+	else { this->addCycles(cpu, 1); }
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
 
@@ -667,8 +698,12 @@ BVS* BVS::getInstance(void) {
 	return BVS::sInstance;
 }
 void BVS::execute(MOS6502& cpu) {
-
+	if ( !(cpu.getProcessorStatus() & processorFlag::FLAG_OVERFLOW) ) { return; }
+	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 2); }
+	else { this->addCycles(cpu, 1); }
+	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
+
 
 /* STATUS FLAG CHANGES */
 

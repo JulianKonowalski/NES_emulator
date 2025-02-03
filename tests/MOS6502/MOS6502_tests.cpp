@@ -17,7 +17,7 @@
 #include "Operations/Shifts_tests.cpp"
 #include "Operations/JumpCall_tests.cpp"
 #include "Operations/StatusFlag_tests.cpp"
-
+#include "Operations/Branch_tests.cpp"
 #include "Operations/System_tests.cpp"
 
 TEST(MOS6502_tests, init) {
