@@ -752,7 +752,14 @@ BRK* BRK::getInstance(void) {
 	return BRK::sInstance;
 }
 void BRK::execute(MOS6502& cpu) {
+	Word programCounter = cpu.getProgramCounter();
+	this->pushStack(cpu, programCounter >> 8);
+	this->pushStack(cpu, programCounter);
+	this->pushStack(cpu, cpu.getProcessorStatus());
+	this->setCpuFlag(cpu, processorFlag::FLAG_BREAK, true);
 
+	Byte lowByte = this->fetchByte(cpu, 0xFFFE);
+	this->setCpuProgramCounter(cpu, (this->fetchByte(cpu, 0xFFFF) << 8) | lowByte);
 }
 
 
@@ -762,7 +769,7 @@ NOP* NOP::getInstance(void) {
 	return NOP::sInstance;
 }
 void NOP::execute(MOS6502& cpu) {
-
+	/* DO NOTHING */
 }
 
 
@@ -772,5 +779,7 @@ RTI* RTI::getInstance(void) {
 	return RTI::sInstance;
 }
 void RTI::execute(MOS6502& cpu) {
-
+	this->setCpuStatus(cpu, this->fetchStack(cpu));
+	Byte lowByte = this->fetchStack(cpu);
+	this->setCpuProgramCounter(cpu, (this->fetchStack(cpu) << 8) | lowByte);
 }

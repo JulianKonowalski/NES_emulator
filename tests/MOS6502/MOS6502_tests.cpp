@@ -18,6 +18,8 @@
 #include "Operations/JumpCall_tests.cpp"
 #include "Operations/StatusFlag_tests.cpp"
 
+#include "Operations/System_tests.cpp"
+
 TEST(MOS6502_tests, init) {
 	MOS6502* cpu = new MOS6502();
 
