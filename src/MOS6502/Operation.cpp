@@ -581,7 +581,7 @@ JSR* JSR::getInstance(void) {
 void JSR::execute(MOS6502& cpu) {
 	Word returnAddress = cpu.getProgramCounter() - 1; //the address stored should be target address - 1
 	this->pushStack(cpu, returnAddress >> 8);
-	this->pushStack(cpu, returnAddress);
+	this->pushStack(cpu, (Byte)returnAddress);
 	this->setCpuProgramCounter(cpu, cpu.getFetchedAddress());
 }
 
@@ -789,7 +789,7 @@ BRK* BRK::getInstance(void) {
 void BRK::execute(MOS6502& cpu) {
 	Word programCounter = cpu.getProgramCounter();
 	this->pushStack(cpu, programCounter >> 8);
-	this->pushStack(cpu, programCounter);
+	this->pushStack(cpu, (Byte)programCounter);
 	this->pushStack(cpu, cpu.getProcessorStatus());
 	this->setCpuFlag(cpu, processorFlag::FLAG_BREAK, true);
 

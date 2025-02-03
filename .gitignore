@@ -6,3 +6,6 @@ out/
 
 # Compiler & Linker for MOS6502 assembly
 cc65/
+
+# Test programs for NES components
+*.bin

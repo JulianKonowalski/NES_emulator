@@ -3,7 +3,7 @@
 
 #include <cstring>
 
-const size_t kMaxMemorySize = 1024 * 64;
+const unsigned short kMaxMemorySize = 1024 * 64;
 
 class Memory {
 
@@ -14,7 +14,7 @@ public:
 
 	Memory(void) { this->clear(); }
 	void clear(void) { memset(mData, 0, kMaxMemorySize); }
-	Byte& operator[](const size_t& index) { return mData[index]; }
+	Byte& operator[](const Word& index) { return mData[index]; }
 
 private:
 	Byte mData[kMaxMemorySize];
