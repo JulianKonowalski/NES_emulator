@@ -89,8 +89,7 @@ REL* REL::getInstance(void) {
 }
 Word REL::getAddress(MOS6502& cpu) { 
 	AddressingMode::mPageCrossed = false;
-	signed char offset = this->fetchByte(cpu); 
-	if (offset < 0) { ++offset; } //additional offset for negative numbers
+	signed char offset = this->fetchByte(cpu);
 	return cpu.getProgramCounter() + offset;
 }
 

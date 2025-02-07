@@ -1,7 +1,6 @@
-#include <MOS6502/Operation.h>
+#include <MOS6502/Instruction.h>
 
 #include <typeinfo>
-#include <iostream>
 
 #include <MOS6502/MOS6502.h>
 

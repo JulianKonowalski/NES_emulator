@@ -7,5 +7,8 @@ out/
 # Compiler & Linker for MOS6502 assembly
 cc65/
 
+# Rough unit tests to get in the ballpark of functionality
+tests/
+
 # Test programs for NES components
 *.bin

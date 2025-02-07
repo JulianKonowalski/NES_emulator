@@ -3,7 +3,7 @@
 
 #include <cstring>
 
-const unsigned short kMaxMemorySize = 1024 * 64;
+const size_t kMaxMemorySize = 1024 * 64;
 
 class Memory {
 

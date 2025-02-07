@@ -207,7 +207,8 @@ PHP* PHP::getInstance(void) {
 	return PHP::sInstance;
 }
 void PHP::execute(MOS6502& cpu) {
-	this->pushStack(cpu, cpu.getProcessorStatus());
+	//break flag is always added to the pushed copy of processor status
+	this->pushStack(cpu, cpu.getProcessorStatus() | processorFlag::FLAG_BREAK);
 }
 
 
@@ -230,7 +231,8 @@ PLP* PLP::getInstance(void) {
 	return PLP::sInstance;
 }
 void PLP::execute(MOS6502& cpu) {
-	this->setCpuStatus(cpu, this->fetchStack(cpu));
+	this->setCpuStatus(cpu, this->fetchStack(cpu) | processorFlag::FLAG_DEFAULT);
+	this->setCpuFlag(cpu, processorFlag::FLAG_BREAK, false);
 }
 
 /* LOGICAL */
@@ -306,18 +308,20 @@ ADC* ADC::getInstance(void) {
 void ADC::execute(MOS6502& cpu) {
 	Byte accumulator = cpu.getAccumulator();
 	Byte data = cpu.getFetched();
-	Byte result = accumulator + data;
+	Word result = accumulator + data;
 	if (cpu.getProcessorStatus() & processorFlag::FLAG_CARRY) { ++result; }
+
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, result > 0xff);
+	result = (Byte)result;
 
 	//set true if the signs of accumulator and data are the same, but the sign of the result is different
 	bool overflow = ~(accumulator & processorFlag::FLAG_NEGATIVE ^ data & processorFlag::FLAG_NEGATIVE) & 
 					(accumulator & processorFlag::FLAG_NEGATIVE ^ result & processorFlag::FLAG_NEGATIVE);
 
-	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, (Byte)result == 0);
-	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, overflow);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, overflow);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
-	this->setCpuAccumulator(cpu, (Byte)result);
+	this->setCpuAccumulator(cpu, result);
 	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
@@ -330,18 +334,20 @@ SBC* SBC::getInstance(void) {
 void SBC::execute(MOS6502& cpu) { //same as ADC but with the binary ~ of fetched data
 	Byte accumulator = cpu.getAccumulator();
 	Byte data = ~cpu.getFetched();
-	Byte result = accumulator + data;
+	Word result = accumulator + data;
 	if (cpu.getProcessorStatus() & processorFlag::FLAG_CARRY) { ++result; }
+
+	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, result > 0xff);
+	result = (Byte)result;
 
 	//set true if the signs of accumulator and data are the same, but the sign of the result is different
 	bool overflow = ~(accumulator & processorFlag::FLAG_NEGATIVE ^ data & processorFlag::FLAG_NEGATIVE) & 
 					(accumulator & processorFlag::FLAG_NEGATIVE ^ result & processorFlag::FLAG_NEGATIVE);
 
-	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, (Byte)result == 0);
-	this->setCpuFlag(cpu, processorFlag::FLAG_CARRY, overflow);
+	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, overflow);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
-	this->setCpuAccumulator(cpu, (Byte)result);
+	this->setCpuAccumulator(cpu, result);
 	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 } 
 
@@ -787,14 +793,16 @@ BRK* BRK::getInstance(void) {
 	return BRK::sInstance;
 }
 void BRK::execute(MOS6502& cpu) {
-	Word programCounter = cpu.getProgramCounter();
+	Word programCounter = cpu.getProgramCounter() + 1; //seems to be a "required" bug
+	Byte processorStatus = cpu.getProcessorStatus();
 	this->pushStack(cpu, programCounter >> 8);
 	this->pushStack(cpu, (Byte)programCounter);
-	this->pushStack(cpu, cpu.getProcessorStatus());
+	this->pushStack(cpu, processorStatus | processorFlag::FLAG_BREAK);
 	this->setCpuFlag(cpu, processorFlag::FLAG_BREAK, true);
 
 	Byte lowByte = this->fetchByte(cpu, 0xFFFE);
 	this->setCpuProgramCounter(cpu, (this->fetchByte(cpu, 0xFFFF) << 8) | lowByte);
+	this->setCpuStatus(cpu, processorStatus | processorFlag::FLAG_INTERRUPT_DISABLE);
 }
 
 

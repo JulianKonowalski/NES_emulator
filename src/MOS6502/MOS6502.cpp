@@ -27,7 +27,8 @@ void MOS6502::init(Memory* memory) {
 }
 
 void MOS6502::readResetVector(void) {
-	mProgramCounter = ((*mMemory)[0xFFFD] << 8) | (*mMemory)[0xFFFC];
+	//mProgramCounter = ((*mMemory)[0xFFFD] << 8) | (*mMemory)[0xFFFC];
+	mProgramCounter = 0x400; //FOR TESTING ONLY
 }
 
 void MOS6502::executeInstruction(void) {
