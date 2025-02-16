@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "MOS6502/MOS6502.h"
-#include "Memory/Memory.h"
+#include "Busses/CPUBus.h"
 
 class NES {
 public:
@@ -12,14 +12,13 @@ public:
 	using Byte = unsigned char;
 	using Word = unsigned short;
 
-	NES(const std::string& programPath);
+	NES(void);
 	void run(void);
 
 private:
-	void loadProgram(const std::string programPath);
 
-	Memory mMemory;
-	MOS6502 mCPU;
+	CPUBus mCpuBus;
+	MOS6502 mCpu;
 };
 
 #endif // !NES_H

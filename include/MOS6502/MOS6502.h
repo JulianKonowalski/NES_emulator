@@ -4,7 +4,7 @@
 #include <cstdint>
 
 #include "MOS6502/OpcodeLUT.h"
-#include "Memory/Memory.h"
+#include "Busses/CPUBus.h"
 
 enum processorFlag {
 	FLAG_CARRY = 1,
@@ -40,7 +40,7 @@ public:
 
 
 	MOS6502(void);
-	void boot(Memory* memory);
+	void boot(CPUBus* bus);
 	void clock(void);
 
 	Byte getFetched(void) const { return mFetchedData; }
@@ -82,7 +82,7 @@ private:
 	void setFlag(const processorFlag& flag, const bool& value);
 	void setPorcessorStatus(const Byte& status) { mStatusRegister = status; }
 
-	Memory* mMemory;
+	CPUBus* mBus;
 
 	OpcodeLUT mOpcodes;
 
