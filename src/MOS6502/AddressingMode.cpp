@@ -1,12 +1,12 @@
-#include <MOS6502/AddressingMode.h>
+#include "MOS6502/AddressingMode.h"
 
-#include <MOS6502/MOS6502.h>
+#include "MOS6502/MOS6502.h"
 
 using Byte = AddressingMode::Byte;
 using Word = AddressingMode::Word;
 
 bool AddressingMode::mPageCrossed = false;
-void AddressingMode::addCycles(MOS6502& cpu, const unsigned short& cycles) { cpu.addCycles(cycles); }
+void AddressingMode::addCycles(MOS6502& cpu, const Byte& cycles) { cpu.addCycles(cycles); }
 void AddressingMode::setFetched(MOS6502& cpu, const Byte& data) { cpu.setFetched(data); }
 Byte AddressingMode::fetchByte(MOS6502& cpu) { return cpu.fetchByte(); }
 Byte AddressingMode::fetchByte(MOS6502& cpu, const Word& address) { return cpu.fetchByte(address); }

@@ -1,19 +1,16 @@
 #ifndef OPCODE_LUT_H
 #define OPCODE_LUT_H
 
-#include <stdexcept>
+#include <cstdio>
 
-#include <MOS6502/Instruction.h>
-#include <MOS6502/Operation.h>
-#include <MOS6502/AddressingMode.h>
+#include "MOS6502/Instruction.h"
+#include "MOS6502/Operation.h"
+#include "MOS6502/AddressingMode.h"
 
 class OpcodeLUT {
 
-    friend class MOS6502; //only this class can create an OpcodeLUT object
-
-    using Byte = unsigned char;
-
-private:
+    friend class MOS6502; //only CPU can create this LUT
+    using Byte = uint8_t;
 
     Instruction& operator[](const Byte& code) { return mOpcodes[code]; }
 

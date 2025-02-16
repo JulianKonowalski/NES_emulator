@@ -1,14 +1,14 @@
-#include <MOS6502/Operation.h>
+#include "MOS6502/Operation.h"
 
-#include <MOS6502/MOS6502.h>
-#include <MOS6502/Instruction.h>
+#include "MOS6502/MOS6502.h"
+#include "MOS6502/Instruction.h"
 
 using Byte = Operation::Byte;
 using Word = Operation::Word;
 
 void Operation::writeMemory(MOS6502& cpu, const Byte& data, const Word& address) { cpu.writeMemory(data, address); }
 void Operation::pushStack(MOS6502& cpu, const Byte& data) { cpu.pushStack(data); }
-void Operation::addCycles(MOS6502& cpu, const short& cycles) { cpu.addCycles(cycles); }
+void Operation::addCycles(MOS6502& cpu, const Byte& cycles) { cpu.addCycles(cycles); }
 void Operation::setCpuX(MOS6502& cpu, const Byte& value) { cpu.setX(value); }
 void Operation::setCpuY(MOS6502& cpu, const Byte& value) { cpu.setY(value); }
 void Operation::setCpuAccumulator(MOS6502& cpu, const Byte& value) { cpu.setAccumulator(value); }
@@ -321,7 +321,7 @@ void ADC::execute(MOS6502& cpu) {
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, overflow);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
-	this->setCpuAccumulator(cpu, result);
+	this->setCpuAccumulator(cpu, (Byte)result);
 	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 }
 
@@ -347,7 +347,7 @@ void SBC::execute(MOS6502& cpu) { //same as ADC but with the binary ~ of fetched
 	this->setCpuFlag(cpu, processorFlag::FLAG_ZERO, result == 0);
 	this->setCpuFlag(cpu, processorFlag::FLAG_OVERFLOW, overflow);
 	this->setCpuFlag(cpu, processorFlag::FLAG_NEGATIVE, result & processorFlag::FLAG_NEGATIVE);
-	this->setCpuAccumulator(cpu, result);
+	this->setCpuAccumulator(cpu, (Byte)result);
 	if (AddressingMode::pageCrossed()) { this->addCycles(cpu, 1); }
 } 
 

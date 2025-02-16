@@ -1,4 +1,4 @@
-#include <NES/Nes.h>
+#include "NES/Nes.h"
 
 #include <fstream>
 
@@ -13,9 +13,7 @@ NES::NES(const std::string& programPath) {
 }
 
 void NES::run(void) {
-	while (true) { 
-		mCPU.executeInstruction(); 
-	}
+	while (true) {  mCPU.clock(); }
 }
 
 void NES::loadProgram(const std::string programPath) {

@@ -1,15 +1,18 @@
 #ifndef ADDRESING_MODE_H
 #define ADDRESING_MODE_H
 
+#include <cstdint>
+
 class MOS6502;
 
 //base abstract class
 class AddressingMode {
 public:
-	using Byte = unsigned char;
-	using Word = unsigned short;
 
-	void addCycles(MOS6502& cpu, const unsigned short& cycles);
+	using Byte = uint8_t;
+	using Word = uint16_t;
+
+	void addCycles(MOS6502& cpu, const Byte& cycles);
 	void setFetched(MOS6502& cpu, const Byte& data);
 	Byte fetchByte(MOS6502& cpu);
 	Byte fetchByte(MOS6502& cpu, const Word& address);
@@ -20,6 +23,7 @@ public:
 	static bool pageCrossed(void) { return AddressingMode::mPageCrossed; }
 
 protected:
+
 	static bool mPageCrossed;
 };
 

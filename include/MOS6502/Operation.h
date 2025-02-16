@@ -1,9 +1,9 @@
 #ifndef OPERATION_H
 #define OPERATION_H
 
-#include <stdexcept>
+#include <cstdint>
 
-#include <MOS6502/AddressingMode.h>
+#include "MOS6502/AddressingMode.h"
 
 class MOS6502;
 enum processorFlag;
@@ -11,11 +11,10 @@ enum processorFlag;
 class Operation {
 public:
 
-	using Byte = unsigned char;
-	using Word = unsigned short;
+	using Byte = uint8_t;
+	using Word = uint16_t;
 
 	void operator=(const Operation& other) = delete;
-
 
 	virtual void execute(MOS6502& cpu) { /*DO_NOTHING*/ }
 
@@ -25,7 +24,7 @@ protected:
 
 	void writeMemory(MOS6502& cpu, const Byte& data, const Word& address);
 	void pushStack(MOS6502& cpu, const Byte& data);
-	void addCycles(MOS6502& cpu, const short& cycles);
+	void addCycles(MOS6502& cpu, const Byte& cycles);
 	void setCpuX(MOS6502& cpu, const Byte& value);
 	void setCpuY(MOS6502& cpu, const Byte& value);
 	void setCpuAccumulator(MOS6502& cpu, const Byte& value);
@@ -34,8 +33,8 @@ protected:
 	void setCpuProgramCounter(MOS6502& cpu, const Word& value);
 	void setCpuFlag(MOS6502& cpu, const processorFlag& flag, const bool& state);
 
-	Byte fetchByte(MOS6502& cpu);
-	Byte fetchByte(MOS6502& cpu, const Word& address);
+	Byte fetchByte(MOS6502& cpu); //fetch from program counter address
+	Byte fetchByte(MOS6502& cpu, const Word& address); //fetch from absolute address
 	Byte fetchStack(MOS6502& cpu);
 
 };

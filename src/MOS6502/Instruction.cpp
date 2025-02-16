@@ -1,8 +1,8 @@
-#include <MOS6502/Instruction.h>
+#include "MOS6502/Instruction.h"
 
 #include <typeinfo>
 
-#include <MOS6502/MOS6502.h>
+#include "MOS6502/MOS6502.h"
 
 AddressingMode* Instruction::sAddressingMode = nullptr;
 
@@ -24,7 +24,11 @@ void Instruction::fetchData(MOS6502& cpu, const Word& address) {
 	}
 }
 
+#include <iostream>
+
 void Instruction::execute(MOS6502& cpu) {
+	std::cout << "Executing " << typeid(*(mOperation)).name() << "\n";
+
 	this->fetchData(cpu, mAddressingMode->getAddress(cpu));
 	mOperation->execute(cpu);
 	cpu.addCycles(mCycles);
