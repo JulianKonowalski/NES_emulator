@@ -10,3 +10,8 @@ add_library(
 	MOS6502
 	${MOS6502_SOURCES}
 )
+
+target_link_libraries(
+	MOS6502
+	BUSES
+)

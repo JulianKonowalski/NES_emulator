@@ -40,7 +40,7 @@ public:
 
 
 	MOS6502(void);
-	void boot(CPUBus* bus);
+	void boot(CPUBus& bus);
 	void clock(void);
 
 	Byte getFetched(void) const { return mFetchedData; }

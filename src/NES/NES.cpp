@@ -2,7 +2,9 @@
 
 #include <fstream>
 
-NES::NES(void) { mCpu.boot(&mCpuBus); }
+NES::NES(Cartridge& cartridge) : mCpuBus(cartridge) {
+	mCpu.boot(mCpuBus); 
+}
 
 void NES::run(void) {
 	while (true) {  mCpu.clock(); }

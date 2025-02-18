@@ -3,16 +3,21 @@
 
 #include <cstdint>
 
+#include "Cartridge/Cartridge.h"
+
 class CPUBus {
 public:
     using Byte = uint8_t;
     using Word = uint16_t;
 
-    Byte read(Word address);
-    void write(Word address, Byte data);
+    CPUBus(Cartridge& cartridge);
+
+    Byte read(const Word& address);
+    void write(const Word& address, const Byte& data);
 
 private:
-    Byte mRAM[2048];
+    Byte mRam[2048];
+    Cartridge* mCartridge;
 };
 
 #endif // !CPUBUS_H

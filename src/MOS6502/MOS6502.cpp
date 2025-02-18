@@ -15,8 +15,8 @@ MOS6502::MOS6502() :
 	mBus(nullptr)
 {};
 
-void MOS6502::boot(CPUBus* bus) {
-	mBus = bus;
+void MOS6502::boot(CPUBus& bus) {
+	mBus = &bus;
 	this->readResetVector();
 }
 

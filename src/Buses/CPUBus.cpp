@@ -1,26 +1,37 @@
 #include "Busses/CPUBus.h"
 
+#include <iostream> //delete this
+#include <cstring>
+
 using Byte = CPUBus::Byte;
 using Word = CPUBus::Word;
 
-Byte CPUBus::read(Word address) {
-    if (address < 0x2000) { return mRAM[address & 0x07FF]; } 
+CPUBus::CPUBus(Cartridge& cartridge) : mCartridge(&cartridge) { memset(mRam, 0, 2048); }
+
+Byte CPUBus::read(const Word& address) {
+    if (address < 0x2000) { return mRam[address & 0x07FF]; } 
     else if (address < 0x4000) {
-        return 0; //PPU registers
+        std::cout << "PPU read not supported yet\n";
+        return 0;
     } else if (address < 0x4020) {
-        return 0; //APU & IO registers
+        std::cout << "APU & IO read not supported yet\n";
+        return 0;
     } else {
-        return 0; //cartridge
+        //check if the ROM is mirrored
+        if (mCartridge->getPrgRomSize() > 0x4000) {
+            return mCartridge->readPrgRom(address);
+        }
+        return mCartridge->readPrgRom(address % 0x4000);
     }
 }
 
-void CPUBus::write(Word address, Byte data) {
-    if (address < 0x2000) { mRAM[address & 0x07FF] = data; } 
+void CPUBus::write(const Word& address, const Byte& data) {
+    if (address < 0x2000) { mRam[address & 0x07FF] = data; } 
     else if (address < 0x4000) {
-        //PPU registers
+        std::cout << "PPU write not supported yet\n";
     } else if (address < 0x4020) {
-        //APU & IO registers
+        std::cout << "APU & IO write not supported yet\n";
     } else {
-        //cartridge
+        throw std::runtime_error("CPU tried to write into ROM memory\n");
     }   
 }

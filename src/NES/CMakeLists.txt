@@ -12,4 +12,6 @@ target_link_libraries(
 	NES
 	PRIVATE
 	MOS6502
+	BUSES
+	CARTRIDGE
 )
