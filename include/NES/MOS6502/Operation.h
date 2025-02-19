@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "MOS6502/AddressingMode.h"
+#include "NES/MOS6502/AddressingMode.h"
 
 class MOS6502;
 enum processorFlag;

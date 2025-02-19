@@ -1,6 +1,6 @@
-#include "MOS6502/AddressingMode.h"
+#include "NES/MOS6502/AddressingMode.h"
 
-#include "MOS6502/MOS6502.h"
+#include "NES/MOS6502/MOS6502.h"
 
 using Byte = AddressingMode::Byte;
 using Word = AddressingMode::Word;

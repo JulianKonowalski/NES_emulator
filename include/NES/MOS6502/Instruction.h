@@ -4,8 +4,8 @@
 #include <string>
 #include <cstdint>
 
-#include "MOS6502/Operation.h"
-#include "MOS6502/AddressingMode.h"
+#include "NES/MOS6502/Operation.h"
+#include "NES/MOS6502/AddressingMode.h"
 
 class MOS6502;
 

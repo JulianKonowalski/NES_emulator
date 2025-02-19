@@ -1,4 +1,4 @@
-#include "MOS6502/MOS6502.h"
+#include "NES/MOS6502/MOS6502.h"
 
 using Byte = MOS6502::Byte;
 
@@ -43,15 +43,15 @@ Byte MOS6502::fetchByte(const Word& address) { return mBus->read(address); }
 
 Byte MOS6502::fetchStack(void) {
 	Byte data = mBus->read(0x100 + (++mStackPointer)); //stkptr will be incremented before the read
-	mBus->write(0x100 + mStackPointer, 0);
+	mBus->write(0, 0x100 + mStackPointer);
 	return data;
 }
 void MOS6502::pushStack(const Byte& data) { 
-	mBus->write(0x100 + mStackPointer--, data); //stkptr will be decremented after the push
+	mBus->write(data, 0x100 + mStackPointer--); //stkptr will be decremented after the push
 }
 
 void MOS6502::writeMemory(const Byte& data, const Word& address) { 
-	mBus->write(address, data);
+	mBus->write(data, address);
 }
 
 

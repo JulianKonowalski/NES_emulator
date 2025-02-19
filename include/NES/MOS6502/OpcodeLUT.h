@@ -3,9 +3,9 @@
 
 #include <cstdio>
 
-#include "MOS6502/Instruction.h"
-#include "MOS6502/Operation.h"
-#include "MOS6502/AddressingMode.h"
+#include "NES/MOS6502/Instruction.h"
+#include "NES/MOS6502/Operation.h"
+#include "NES/MOS6502/AddressingMode.h"
 
 class OpcodeLUT {
 

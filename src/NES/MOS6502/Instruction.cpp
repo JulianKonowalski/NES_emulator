@@ -1,8 +1,8 @@
-#include "MOS6502/Instruction.h"
+#include "NES/MOS6502/Instruction.h"
 
 #include <typeinfo>
 
-#include "MOS6502/MOS6502.h"
+#include "NES/MOS6502/MOS6502.h"
 
 AddressingMode* Instruction::sAddressingMode = nullptr;
 

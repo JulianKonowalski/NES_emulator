@@ -5,6 +5,8 @@
 #include <vector>
 #include <cstdint>
 
+#include "NES/Cartridge/Mapper.h"
+
 enum Mirroring {
     HORIZONTAL,
     VERTICAL,
@@ -19,19 +21,15 @@ public:
 
     Cartridge(const std::string& filePath);
 
-    //prgRomSize varies and changes how the bus reads data, so it has a dedicated getter
-    Byte getPrgRomSize(void) { return mPrgRomSize; }
-    Byte getMapperType(void) { return mMapper; }
     Mirroring getMirroringType(void) { return mMirroring; }
 
-    Byte readPrgRom(const Word& address) { return mPrgRom[address]; }
-    Byte readChrRom(const Word& address) { return mChrRom[address]; }
+    Byte readPrgRom(const Word& address);
+    Byte readChrRom(const Word& address);
 
 private:
-    Byte mMapper;
+    Mapper* mMapper;
     Mirroring mMirroring;
 
-    Byte mPrgRomSize;
     std::vector<Byte> mPrgRom;
     std::vector<Byte> mChrRom;
 };

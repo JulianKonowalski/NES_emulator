@@ -1,7 +1,7 @@
-#include "MOS6502/Operation.h"
+#include "NES/MOS6502/Operation.h"
 
-#include "MOS6502/MOS6502.h"
-#include "MOS6502/Instruction.h"
+#include "NES/MOS6502/MOS6502.h"
+#include "NES/MOS6502/Instruction.h"
 
 using Byte = Operation::Byte;
 using Word = Operation::Word;

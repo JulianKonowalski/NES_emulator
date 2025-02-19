@@ -1,7 +1,10 @@
-#include "Cartridge/Cartridge.h"
+#include "NES/Cartridge/Cartridge.h"
 
 #include <fstream>
 #include <stdexcept>
+
+using Byte = Cartridge::Byte;
+using Word = Cartridge::Word;
 
 /**
 * There's a lot of 'magic' numbers, but
@@ -12,7 +15,7 @@
 * constants.
 */
 
-Cartridge::Cartridge(const std::string& filePath) : mPrgRomSize(0) {
+Cartridge::Cartridge(const std::string& filePath) {
     std::ifstream romFile(filePath, std::ios::binary);
 
     //check the opening ASCII string
@@ -38,7 +41,14 @@ Cartridge::Cartridge(const std::string& filePath) : mPrgRomSize(0) {
     else if (ctrl1 & 1) { mMirroring = Mirroring::VERTICAL; }
     else { mMirroring = Mirroring::HORIZONTAL; }
 
-    mMapper = (ctrl2 & 0b11110000) | ctrl1 >> 4;
+    Byte mapperId = (ctrl2 & 0b11110000) | ctrl1 >> 4;
+    switch (mapperId) {
+    case 0:
+        mMapper = new Mapper0((Word)mPrgRom.size(), (Word)mChrRom.size());
+    break;
+    default:
+        throw std::runtime_error("Error: Unsupported mapper type");
+    }
 
     //load ROM data into memory
     bool hasTrainer = ctrl1 & 1 << 2;
@@ -46,4 +56,12 @@ Cartridge::Cartridge(const std::string& filePath) : mPrgRomSize(0) {
     romFile.seekg(dataStart, romFile.beg);
     for (int i = 0; i < mPrgRom.size(); ++i) { mPrgRom[i] = romFile.get(); }
     for (int i = 0; i < mChrRom.size(); ++i) { mChrRom[i] = romFile.get(); }
+}
+
+Byte Cartridge::readPrgRom(const Word& address) {
+    return mPrgRom[mMapper->mapPrgRomAddr(address)];
+}
+
+Byte Cartridge::readChrRom(const Word& address) {
+    return mChrRom[mMapper->mapChrRomAddr(address)];
 }

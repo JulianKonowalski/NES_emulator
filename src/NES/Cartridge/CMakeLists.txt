@@ -1,6 +1,7 @@
 set(
     CARTRIDGE_SOURCES
     Cartridge.cpp
+    Mapper.cpp
 )
 
 add_library(

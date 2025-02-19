@@ -3,8 +3,8 @@
 
 #include <cstdint>
 
-#include "MOS6502/OpcodeLUT.h"
-#include "Busses/CPUBus.h"
+#include "NES/MOS6502/OpcodeLUT.h"
+#include "NES/Buses/CPUBus.h"
 
 enum processorFlag {
 	FLAG_CARRY = 1,
