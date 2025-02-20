@@ -6,7 +6,7 @@
 const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\nestest.nes";
 
 int main(void) {
-    Screen screen("NES", 256, 240);
+    Screen screen("NES", 256, 240, 4);
     Cartridge cartridge(filepath);
     NES nes(screen, cartridge);
     nes.run();

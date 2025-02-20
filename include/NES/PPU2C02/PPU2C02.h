@@ -19,6 +19,17 @@ enum PPU_REGISTER {
     OAMDMA
 };
 
+enum CTRL_REGISTER {
+    NTADDR1 = 1,        //LSB of base nametable address
+    NTADDR2 = 1 << 1,   //MSB of base nametable address
+    VRAMINC = 1 << 2,   //address increment per CPU read/write of PPUDATA
+    SPRADDR = 1 << 3,   //sprite pattern table address
+    BPTADDR = 1 << 4,   //background pattern table address
+    SPRTSIZ = 1 << 5,   //sprite size
+    PPUMSTR = 1 << 6,   //PPU master/slave select
+    VBNMIEN = 1 << 7    //Vblank NMI enable
+};
+
 class PPU2C02 {
 public:
 
@@ -41,14 +52,17 @@ private:
 
     const ColourLUT mColours;
 
-    Byte mRegisters[8];
+    Byte mRegisters[8]; //registers available for the CPU
 
-    Byte mPpuDataBuffer;
-    Word mPpuAddr;
-    bool mAddrLatch;
+    Byte mPShiftReg1;   //for storing 1st bitplane of a tile (LSB)
+    Byte mPShiftReg2;   //for storing 2nd bitplane of a tile (MSB)
 
-    short mRow;
-    short mColumn;
+    Byte mPpuDataBuffer;    //for storing data fetched using PPUADDR register
+    Word mPpuAddr;          //for storing PPUADDR address
+    bool mAddrLatch;        //for guarding PPUADDR register functionality
+
+    short mRow;     //for keeping track of currently drawn row
+    short mColumn;  //for keeping track of currently drawn column
 };
 
 #endif // !PPU_H

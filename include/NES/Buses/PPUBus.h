@@ -13,8 +13,8 @@ public:
  
     PPUBus(Cartridge& cartridge);
 
-    Byte read(Word& address);
-    void write(const Byte& data, Word& address);
+    Byte read(Word address);
+    void write(const Byte& data, Word address);
 
 private:
 

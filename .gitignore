@@ -12,3 +12,4 @@ tests/
 
 # Test programs for NES components
 *.bin
+*.nes

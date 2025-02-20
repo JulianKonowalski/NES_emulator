@@ -7,11 +7,14 @@
 
 class Screen {
 public:
-    Screen(std::string title, int width, int height);
+    Screen(std::string title, int width, int height, short scale);
     ~Screen(void);
 
     void swapBuffers(void);
     void drawPixel(const int& posX, const int& posY, const Colour& colour);
+
+private:
+    short mScale;
 };
 
 #endif // !SCREEN_H

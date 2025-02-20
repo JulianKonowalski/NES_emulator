@@ -27,8 +27,7 @@ void Instruction::fetchData(MOS6502& cpu, const Word& address) {
 #include <iostream>
 
 void Instruction::execute(MOS6502& cpu) {
-	std::cout << "Executing " << typeid(*(mOperation)).name() << "\n";
-
+	//std::cout << "Executing " << typeid(*(mOperation)).name() << " at " << addr << "\n";
 	this->fetchData(cpu, mAddressingMode->getAddress(cpu));
 	mOperation->execute(cpu);
 	cpu.addCycles(mCycles);

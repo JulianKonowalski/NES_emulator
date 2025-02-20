@@ -18,7 +18,7 @@ using Word = Cartridge::Word;
 Cartridge::Cartridge(const std::string& filePath) {
     std::ifstream romFile(filePath, std::ios::binary);
 
-    //check the opening ASCII string
+    //heck the opening ASCII string
     const char iNesHeaderStart[4] = { 0x4E, 0x45, 0x53, 0x1A };
     for(int i = 0; i < 4; ++i) {
         if (romFile.get() != iNesHeaderStart[i]) {
