@@ -5,6 +5,7 @@
 
 #include "IO/Screen.h"
 #include "NES/Buses/PPUBus.h"
+#include "NES/PPU2C02/ColourLUT.h"
 
 enum PPU_REGISTER {
     PPUCTRL,
@@ -13,6 +14,7 @@ enum PPU_REGISTER {
     OAMADDR,
     OAMDATA,
     PPUSCROLL,
+    PPUADDR,
     PPUDATA,
     OAMDMA
 };
@@ -29,14 +31,24 @@ public:
 
     void clock(void);
 
-    Byte readRegister(const Word& address) { return mRegisters[address & 0x07]; }
-    void writeRegister(const Byte& data, const Word& address) { mRegisters[address & 0x07] = data; }
+    Byte readRegister(const Word& address);
+    void writeRegister(const Byte& data, const Word& address);
 
 private:
+
     PPUBus* mBus;
     Screen* mScreen;
 
+    const ColourLUT mColours;
+
     Byte mRegisters[8];
+
+    Byte mPpuDataBuffer;
+    Word mPpuAddr;
+    bool mAddrLatch;
+
+    short mRow;
+    short mColumn;
 };
 
 #endif // !PPU_H

@@ -13,15 +13,15 @@ public:
  
     PPUBus(Cartridge& cartridge);
 
-    Byte read(const Word& address);
-    void write(const Byte& data, const Word& address);
+    Byte read(Word& address);
+    void write(const Byte& data, Word& address);
 
 private:
 
     Cartridge* mCartridge;
 
-    Byte mNameTable[2048];
-    Byte mPalettes[32];
+    Byte mNameTable[2048] = { 0 };
+    Byte mPalettes[32] = { 0 };
 
 };
 
