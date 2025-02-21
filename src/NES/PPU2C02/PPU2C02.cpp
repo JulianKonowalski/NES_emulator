@@ -1,5 +1,7 @@
 #include "NES/PPU2C02/PPU2C02.h"
  
+#include <iostream> //detete this
+
 using Byte = PPU2C02::Byte;
 using Word = PPU2C02::Word;
 
@@ -40,11 +42,11 @@ void PPU2C02::clock(void) {
     if (mColumn % 8 == 0) { //fetch new tile data only when crossing the tile border
         Word spriteOffset = mRegisters[PPUCTRL] & CTRL_REGISTER::SPRADDR ? 0x1000 : 0;
 
-        Word tileIndexAddress = 0x2000 + (mColumn / 8) + ( (mRow / 8) * 32 );
+        Word tileIndexAddress = 0x2000 + (mColumn / 8) + ( (mRow / 8) * 32 );   //base addres + tile's column index + (tile's row index * number of columns)
         Byte tileIndex = mBus->read(tileIndexAddress);
 
         //NES fetches 16 bytes of tile data, I'm only fetching 2 needed for the current line
-        Word patternDataAddress = spriteOffset + (tileIndex * 16) + ( (mRow % 8) );
+        Word patternDataAddress = spriteOffset + (tileIndex * 16) + ( (mRow % 8) ); //offset + (tile * tileSize) + row index within the tile
 
         mPShiftReg1 = mBus->read(patternDataAddress);
         mPShiftReg2 = mBus->read(patternDataAddress + 8);
@@ -74,7 +76,7 @@ Byte PPU2C02::readRegister(const Word& address) {
     switch (address & 0x7) {
     case PPUCTRL: break;    //write only
     case PPUMASK: break;    //write only
-    case PPUSTATUS: 
+    case PPUSTATUS:
         status = mRegisters[PPUSTATUS];
         //mRegisters[PPUSTATUS] &= ~(1 << 7); //clear the Vblank flag
         mRegisters[PPUSTATUS] |= 1 << 7;
@@ -84,12 +86,15 @@ Byte PPU2C02::readRegister(const Word& address) {
     case OAMDATA: return mRegisters[OAMDATA];
     case PPUSCROLL: break;  //write only
     case PPUADDR: break;    //write only
-    case PPUDATA: 
+    case PPUDATA:
         //skip the delay if the address is reffering to the palettes
         if (mPpuAddr >= 0x3F00) { ++mPpuAddr; return mBus->read(mPpuAddr); }
         mRegisters[PPUDATA] = mPpuDataBuffer;
         mPpuDataBuffer = mBus->read(mPpuAddr);
         mPpuAddr += mRegisters[PPUCTRL] & CTRL_REGISTER::VRAMINC ? 32 : 1;
+
+        std::cout << "PPUDATA read increment. Returned " << (int)mRegisters[PPUDATA] << "\n";
+
         return mRegisters[PPUDATA];
     }
 }
@@ -116,10 +121,13 @@ void PPU2C02::writeRegister(const Byte& data, const Word& address) {
         } else {
             mPpuAddr = (mPpuAddr << 8) | data;
             mAddrLatch = !mAddrLatch;
+            std::cout << "Set PPUADDR to " << (int)mPpuAddr << "\n";
         }
         break;
     case PPUDATA:
         mBus->write(data, mPpuAddr);
+
+        std::cout << "PPUDATA write increment. Wrote " << (int)data << "\n";
 
         //mPpuAddr += mRegisters[PPUCTRL] & CTRL_REGISTER::VRAMINC ? 32 : 1;
 

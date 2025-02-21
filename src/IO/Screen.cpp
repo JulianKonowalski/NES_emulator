@@ -20,5 +20,4 @@ void Screen::swapBuffers(void) {
 
 void Screen::drawPixel(const int& posX, const int& posY, const Colour& colour) {
     DrawRectangle(posX * mScale, posY * mScale, mScale, mScale, {colour.red(), colour.green(), colour.blue(), 255});
-    //DrawPixel(posX, posY, {colour.red(), colour.green(), colour.blue(), 255});
 }
