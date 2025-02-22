@@ -13,24 +13,20 @@ void Instruction::operator=(const Instruction& other) {
 	mCycles = other.mCycles;
 }
 
-void Instruction::fetchData(MOS6502& cpu, const Word& address) {
-	cpu.setFetchedAddress(address);
-	sAddressingMode = mAddressingMode;
+void Instruction::fetchAddress(MOS6502& cpu) {
+	cpu.setFetchedAddress(mAddressingMode->getAddress(cpu));
 	auto addressingModeType = typeid(*mAddressingMode).hash_code();
-	if ( addressingModeType == typeid( *(ACC::getInstance()) ).hash_code() ) { 
-		cpu.setFetched(cpu.getAccumulator()); 
-	} else if ( addressingModeType != typeid( *(IMP::getInstance()) ).hash_code() ) { 
-		cpu.setFetched(cpu.fetchByte(address)); 
+
+	//a latch to determine if the data should be fetched from the accumulator
+	if (addressingModeType == typeid(*(ACC::getInstance())).hash_code()) {
+		cpu.setAccAddressing(true);
+	} else {
+		cpu.setAccAddressing(false);
 	}
 }
 
-#include <iostream>
-
 void Instruction::execute(MOS6502& cpu) {
-
-	std::cout << typeid(*(mOperation)).name() << " 0x" << std::hex << (int)cpu.getFetched() << "\n";
-
-	this->fetchData(cpu, mAddressingMode->getAddress(cpu));
+	this->fetchAddress(cpu);
 	mOperation->execute(cpu);
 	cpu.addCycles(mCycles);
 }

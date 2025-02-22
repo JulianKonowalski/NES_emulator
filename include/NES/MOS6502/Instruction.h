@@ -49,7 +49,8 @@ private:
 	{}
 
 	void operator=(const Instruction& other);
-	void fetchData(MOS6502& cpu, const Word& address);
+
+	void fetchAddress(MOS6502& cpu);
 
 	std::string mLabel; //these are useful when debugging, otherwise they don't serve any purpose
 	Operation* mOperation;

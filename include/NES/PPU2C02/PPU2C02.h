@@ -57,12 +57,12 @@ private:
     Byte mPShiftReg1;   //for storing 1st bitplane of a tile (LSB)
     Byte mPShiftReg2;   //for storing 2nd bitplane of a tile (MSB)
 
-    Byte mPpuDataBuffer;    //for storing data fetched using PPUADDR register
-    Word mPpuAddr;          //for storing PPUADDR address
-    bool mAddrLatch;        //for guarding PPUADDR register functionality
+    Byte mDataBuffer;   //for storing data fetched using PPUADDR register
+    Word mVRamAddr;     //for storing PPUADDR address - internal v register
+    Byte mWLatch;       //for guarding PPUADDR register functionality - internal w register
 
-    short mRow;     //for keeping track of currently drawn row
-    short mColumn;  //for keeping track of currently drawn column
+    short mRow;         //for keeping track of currently drawn row
+    short mColumn;      //for keeping track of currently drawn column
 };
 
 #endif // !PPU_H

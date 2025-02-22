@@ -1,41 +1,28 @@
 #include "NES/PPU2C02/PPU2C02.h"
- 
-#include <iostream> //detete this
+
+#include <iostream>
 
 using Byte = PPU2C02::Byte;
 using Word = PPU2C02::Word;
 
 PPU2C02::PPU2C02(void) :
-    mBus(nullptr),
     mScreen(nullptr),
+    mBus(nullptr),
+    mRow(-1),
+    mColumn(0),
     mPShiftReg1(0),
     mPShiftReg2(0),
-    mPpuDataBuffer(0),
-    mPpuAddr(0),
-    mAddrLatch(false),
-    mRow(-1),
-    mColumn(0)
+    mDataBuffer(0),
+    mVRamAddr(0),
+    mWLatch(0)
 {
     for (int i = 0; i < 8; ++i) { mRegisters[i] = 0; }
-
-    //only this register is not equal to 0 after boot
-    mRegisters[PPUSTATUS] = 0b10100000;
 }
 
 void PPU2C02::boot(PPUBus& bus, Screen& screen) {
     mBus = &bus;
     mScreen = &screen;
 }
-
-
-/**
-* This method provides the
-* whole drawing logic. It's
-* a bit long, but I wanted
-* to keep all of it in one
-* place, as it can be quite
-* confusing.
-*/
 
 void PPU2C02::clock(void) {
 
@@ -72,35 +59,38 @@ void PPU2C02::clock(void) {
 }
 
 Byte PPU2C02::readRegister(const Word& address) {
-    Byte status; //to avoid "initialisation skipped by case label" error lol
-    switch (address & 0x7) {
-    case PPUCTRL: break;    //write only
-    case PPUMASK: break;    //write only
+    Byte data(0);
+    switch (address &0x7) {
+    case PPUCTRL:   break; //write only
+    case PPUMASK:   break; //write only
     case PPUSTATUS:
-        status = mRegisters[PPUSTATUS];
+        data = mRegisters[PPUSTATUS];
         //mRegisters[PPUSTATUS] &= ~(1 << 7); //clear the Vblank flag
         mRegisters[PPUSTATUS] |= 1 << 7;
-        mAddrLatch = false;
-        return status;
-    case OAMADDR: break;    //write only
-    case OAMDATA: return mRegisters[OAMDATA];
-    case PPUSCROLL: break;  //write only
-    case PPUADDR: break;    //write only
+        mWLatch = 0;
+        return data;
+        break;
+    case OAMADDR:   break; //write only
+    case OAMDATA:
+        break;
+    case PPUSCROLL: break; //write only
+    case PPUADDR:   break; //write only
     case PPUDATA:
-        //skip the delay if the address is reffering to the palettes
-        if (mPpuAddr >= 0x3F00) { ++mPpuAddr; return mBus->read(mPpuAddr); }
-        mRegisters[PPUDATA] = mPpuDataBuffer;
-        mPpuDataBuffer = mBus->read(mPpuAddr);
-        mPpuAddr += mRegisters[PPUCTRL] & CTRL_REGISTER::VRAMINC ? 32 : 1;
-
-        std::cout << "PPUDATA read increment. Returned " << (int)mRegisters[PPUDATA] << "\n";
-
-        return mRegisters[PPUDATA];
+        if (mVRamAddr >= 0x3F00) {  //skip the delay for palette reads 
+            data = mBus->read(mVRamAddr);
+            ++mVRamAddr; 
+            return data;
+        }
+        data = mDataBuffer;
+        mDataBuffer = mBus->read(mVRamAddr);
+        mVRamAddr += mRegisters[PPUCTRL] & CTRL_REGISTER::VRAMINC ? 32 : 1;
+        return data;
+        break;
     }
 }
 
 void PPU2C02::writeRegister(const Byte& data, const Word& address) {
-    switch (address & 0x7) {
+    switch (address &0x7) {
     case PPUCTRL:
         mRegisters[PPUCTRL] = data;
         break;
@@ -115,22 +105,17 @@ void PPU2C02::writeRegister(const Byte& data, const Word& address) {
     case PPUSCROLL:
         break;
     case PPUADDR:
-        if (!mAddrLatch) { //here the byte storage is NOT little endian
-            mPpuAddr = data;
-            mAddrLatch = !mAddrLatch;
+        if (!mWLatch) { //the high byte of the address is written first
+            mVRamAddr = data;
+            mWLatch = 1;
         } else {
-            mPpuAddr = (mPpuAddr << 8) | data;
-            mAddrLatch = !mAddrLatch;
-            std::cout << "Set PPUADDR to " << (int)mPpuAddr << "\n";
+            mVRamAddr = (mVRamAddr << 8) | data;
+            mWLatch = 0;
         }
         break;
     case PPUDATA:
-        mBus->write(data, mPpuAddr);
-
-        std::cout << "PPUDATA write increment. Wrote " << (int)data << "\n";
-
-        //mPpuAddr += mRegisters[PPUCTRL] & CTRL_REGISTER::VRAMINC ? 32 : 1;
-
+        mBus->write(data, mVRamAddr);
+        mVRamAddr += mRegisters[PPUCTRL] & CTRL_REGISTER::VRAMINC ? 32 : 1;
         break;
     }
 }

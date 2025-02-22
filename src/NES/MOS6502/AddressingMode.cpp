@@ -7,7 +7,6 @@ using Word = AddressingMode::Word;
 
 bool AddressingMode::mPageCrossed = false;
 void AddressingMode::addCycles(MOS6502& cpu, const Byte& cycles) { cpu.addCycles(cycles); }
-void AddressingMode::setFetched(MOS6502& cpu, const Byte& data) { cpu.setFetched(data); }
 Byte AddressingMode::fetchByte(MOS6502& cpu) { return cpu.fetchByte(); }
 Byte AddressingMode::fetchByte(MOS6502& cpu, const Word& address) { return cpu.fetchByte(address); }
 Word AddressingMode::fetchFromProgramCounter(MOS6502& cpu) { return cpu.mProgramCounter++; } //this is a special case, when the address of data to be loaded is pointed to by the program counter, used only in IMM addressing

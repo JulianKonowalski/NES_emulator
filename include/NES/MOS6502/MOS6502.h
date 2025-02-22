@@ -43,8 +43,8 @@ public:
 	void boot(CPUBus& bus);
 	void clock(void);
 
-	Byte getFetched(void) const { return mFetchedData; }
 	Word getFetchedAddress(void) const { return mFetchedAddress; }
+	Byte getFetched(void) const { return mAccAddressing ? mAccumulator : mBus->read(mFetchedAddress); }
 
 	Byte getCycles(void) const { return mCycles; }
 
@@ -60,8 +60,8 @@ private:
 	void readResetVector(void);
 	void executeInstruction(void);
 
-	Byte fetchByte(void); //fetch from programCounter address
-	Byte fetchByte(const Word& address); //fetch from absolute address
+	Byte fetchByte(void);					//fetch from programCounter address
+	Byte fetchByte(const Word& address);	//fetch from absolute address
 
 	Byte fetchStack(void);
 	void pushStack(const Byte& data);
@@ -70,7 +70,7 @@ private:
 
 	void addCycles(const Byte& cycles) { mCycles += cycles; }
 
-	void setFetched(const Byte& data) { mFetchedData = data; }
+	void setAccAddressing(const bool& state) { mAccAddressing = state; }
 	void setFetchedAddress(const Word& address) { mFetchedAddress = address; }
 
 	void setX(const Byte& data) { mX = data; }
@@ -88,8 +88,8 @@ private:
 
 	Byte mCycles;
 
-	Byte mFetchedData; //temporary register for storing loaded data
-	Word mFetchedAddress; //temporary register for storing the address of loaded data
+	Word mFetchedAddress;	//temporary register for storing the address of loaded data
+	bool mAccAddressing;	//to determine if the data should be fetched from the accumulator
 
 	Word mProgramCounter;
 	Byte mStackPointer;

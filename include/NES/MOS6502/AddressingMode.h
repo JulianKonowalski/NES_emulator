@@ -13,7 +13,6 @@ public:
 	using Word = uint16_t;
 
 	void addCycles(MOS6502& cpu, const Byte& cycles);
-	void setFetched(MOS6502& cpu, const Byte& data);
 	Byte fetchByte(MOS6502& cpu);
 	Byte fetchByte(MOS6502& cpu, const Word& address);
 	Word fetchFromProgramCounter(MOS6502& cpu);
