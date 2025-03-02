@@ -2,10 +2,19 @@
 #define PPU_H
 
 #include <cstdint>
+#include <functional>
 
-#include "IO/Screen.h"
+#include "IO/Window.h"
 #include "NES/Buses/PPUBus.h"
 #include "NES/PPU2C02/ColourLUT.h"
+
+enum RENDER_STAGE {
+    FETCH_NT = 0,
+    FETCH_AT = 2,
+    FETCH_TILE_LSB = 4,
+    FETCH_TILE_MSB = 6,
+    INC_V = 7
+};
 
 enum PPU_REGISTER {
     PPUCTRL,
@@ -30,15 +39,35 @@ enum CTRL_REGISTER {
     VBNMIEN = 1 << 7    //Vblank NMI enable
 };
 
+enum MASK_REGISTER {
+    RENDER_BACKGROUND = 1 << 3,
+    RENDER_SPRITES = 1 << 4
+};
+
+enum STATUS_REGISTER {
+    SPRITE_OVERFLOW = 1 << 5,
+    SPRITE_0 = 1 << 6,
+    VBLANK = 1 << 7
+};
+
+enum VRAM_MASK {
+    COARSE_X = 0b11111,
+    COARSE_Y = 0b1111100000,
+    NT_SWITCH = 0b110000000000,
+    NT_Y = 1 << 11,
+    NT_X = 1 << 10,
+    FINE_Y = 0b0111000000000000
+};
+
 class PPU2C02 {
 public:
 
     using Byte = uint8_t;
     using Word = uint16_t;
 
-    PPU2C02(void);
+    PPU2C02(std::function<void(void)> nmiCallback);
 
-    void boot(PPUBus& bus, Screen& screen);
+    void boot(PPUBus& bus, Window& window);
 
     void clock(void);
 
@@ -47,22 +76,44 @@ public:
 
 private:
 
-    PPUBus* mBus;
-    Screen* mScreen;
+    Byte fetchNametable(void);
+    Byte fetchAttribute(void);
+    Byte fetchTileData(const bool& fetchMsb);
+
+    void updateDataRegisters(void);
+    void preRenderRoutine(void);
+    void postRenderRoutine(void);
+    void incrementX(void);
+    void incrementY(void);
+    void resetX(void);
+    void resetY(void);
 
     const ColourLUT mColours;
 
-    Byte mRegisters[8]; //registers available for the CPU
+    std::function<void(void)> mNmiCallback; //non-maskable interrupt callback
 
-    Byte mPShiftReg1;   //for storing 1st bitplane of a tile (LSB)
-    Byte mPShiftReg2;   //for storing 2nd bitplane of a tile (MSB)
+    PPUBus* mBus;
+    Window* mWindow;
 
-    Byte mDataBuffer;   //for storing data fetched using PPUADDR register
-    Word mVRamAddr;     //for storing PPUADDR address - internal v register
-    Byte mWLatch;       //for guarding PPUADDR register functionality - internal w register
+    Byte mRegisters[8];     //registers available for CPU write and reads
 
-    short mRow;         //for keeping track of currently drawn row
-    short mColumn;      //for keeping track of currently drawn column
+    Word mVRamAddr;         //vram adderss
+    Word mTRamAddr;         //temporary vram address (address of the top left onscreen tile)
+    Byte mXScroll;          //fine X scroll
+
+    Word mPShiftReg1;       //1st bitplane of a tile (LSB)
+    Word mPShiftReg2;       //2nd bitplane of a tile (MSB)
+
+    Byte mBgTileId;         //fetched tile index
+    Byte mBgTileAttribute;  //fetched tile attribute index
+    Byte mBgTileLsb;        //fetched tile 1st bitplane
+    Byte mBgTileMsb;        //fetched tile 2nd bitplane
+
+    Byte mWLatch;           //1st or 2nd write toggle
+    Byte mDataBuffer;       //data fetched from PPUADDR
+
+    short mScanline;        //currently drawn row
+    short mCycle;           //currently drawn column
 };
 
 #endif // !PPU_H

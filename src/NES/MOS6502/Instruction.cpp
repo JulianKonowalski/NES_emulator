@@ -25,8 +25,38 @@ void Instruction::fetchAddress(MOS6502& cpu) {
 	}
 }
 
+#include <iostream>
+#include <ios>
+#include <fstream>
+
+std::ofstream logfile;
+
+static long cycles = 0;
+bool logging = false;
+
 void Instruction::execute(MOS6502& cpu) {
+
+
+	auto pc = cpu.getProgramCounter() - 1;
+
+	//if (logging) {
+		//std::cout << std::hex << (int)pc << " " << typeid(*(mOperation)).name() << "\n";
+	//}
+
 	this->fetchAddress(cpu);
 	mOperation->execute(cpu);
 	cpu.addCycles(mCycles);
+
+	//if (!logfile.is_open()) { logfile.open("ctrlLog.txt", std::ios::trunc); }
+	//if (logfile.is_open()) {
+	//	logfile << 
+	//		std::hex << (int)pc << " " << 
+	//		std::hex << (int)cpu.getAccumulator() << " " << 
+	//		std::hex << (int)cpu.getX() << " " << 
+	//		std::hex << (int)cpu.getY() << " " << 
+	//		std::hex << (int)cpu.getProcessorStatus() << " " << 
+	//		std::hex << (int)cpu.getStackPointer() << "\n";
+	//}
+
+	//cycles++;
 }

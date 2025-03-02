@@ -1,20 +1,22 @@
 #include "NES/Nes.h"
 
-#include <fstream>
+#include <functional>
 
-NES::NES(Screen& screen, Cartridge& cartridge) :
+NES::NES(Cartridge& cartridge) :
+    mWindow("NES", 256, 240, 4, mJoypad),
 	mClock(0),
-	mCpuBus(mPpu, cartridge),
+	mPpu(std::bind(&MOS6502::nmi, &mCpu)),
+	mCpuBus(mPpu, cartridge, mJoypad),
 	mPpuBus(cartridge)
 {
 	mCpu.boot(mCpuBus); 
-	mPpu.boot(mPpuBus, screen);
+	mPpu.boot(mPpuBus, mWindow);
 }
 
 void NES::run(void) {
 	while (true) {  
-		if (mClock % 3 == 0) { mCpu.clock(); }
 		mPpu.clock();
+		if (mClock % 3 == 0) { mCpu.clock(); }
 		++mClock;
 	}
 }

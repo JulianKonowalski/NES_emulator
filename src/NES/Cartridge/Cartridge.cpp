@@ -18,7 +18,7 @@ using Word = Cartridge::Word;
 Cartridge::Cartridge(const std::string& filePath) {
     std::ifstream romFile(filePath, std::ios::binary);
 
-    //heck the opening ASCII string
+    //check the opening ASCII string
     const char iNesHeaderStart[4] = { 0x4E, 0x45, 0x53, 0x1A };
     for(int i = 0; i < 4; ++i) {
         if (romFile.get() != iNesHeaderStart[i]) {
@@ -59,9 +59,11 @@ Cartridge::Cartridge(const std::string& filePath) {
 }
 
 Byte Cartridge::readPrgRom(const Word& address) {
-    return mPrgRom[mMapper->mapPrgRomAddr(address)];
+    if (mPrgRom.size()) { return mPrgRom[mMapper->mapPrgRomAddr(address)]; }
+    return 0;
 }
 
 Byte Cartridge::readChrRom(const Word& address) {
-    return mChrRom[mMapper->mapChrRomAddr(address)];
+    if (mChrRom.size()) { return mChrRom[mMapper->mapChrRomAddr(address)]; }
+    return 0;
 }

@@ -3,20 +3,21 @@
 using Byte = MOS6502::Byte;
 
 MOS6502::MOS6502() : 
-	mCycles(0),
-	//mFetchedData(0),
+	mCycles(8),
+	mAccAddressing(false),
 	mFetchedAddress(0),
 	mProgramCounter(0),
-	mStackPointer(0xFF),
+	mStackPointer(0),
 	mAccumulator(0),
 	mX(0),
 	mY(0),
-	mStatusRegister(processorFlag::FLAG_DEFAULT), //this bit is always set to 1
+	mStatusRegister(ProcessorFlag::FLAG_DEFAULT), //this bit is always set to 1
 	mBus(nullptr)
 {};
 
 void MOS6502::boot(CPUBus& bus) {
 	mBus = &bus;
+	for (int i = 0; i < 3; ++i) { this->pushStack(0); } //these are 3 fake pushes described in the docs
 	this->readResetVector();
 }
 
@@ -25,8 +26,19 @@ void MOS6502::clock(void) { //execute only when cycle count == 0
 	--mCycles;
 }
 
+void MOS6502::nmi(void) {
+	this->pushStack(mProgramCounter >> 8);
+	this->pushStack(mProgramCounter);
+	this->pushStack(mStatusRegister);
+	this->readNmiVector();
+}
+
 void MOS6502::readResetVector(void) {
 	mProgramCounter = mBus->read(0xFFFD) << 8 | mBus->read(0xFFFC);
+}
+
+void MOS6502::readNmiVector(void) {
+	mProgramCounter = mBus->read(0xFFFB) << 8 | mBus->read(0xFFFA);
 }
 
 void MOS6502::executeInstruction(void) {
@@ -42,12 +54,11 @@ Byte MOS6502::fetchByte(void) { return mBus->read(mProgramCounter++); }
 Byte MOS6502::fetchByte(const Word& address) { return mBus->read(address); }
 
 Byte MOS6502::fetchStack(void) {
-	Byte data = mBus->read(0x100 + (++mStackPointer)); //stkptr will be incremented before the read
-	mBus->write(0, 0x100 + mStackPointer);
+	Byte data = mBus->read(0x100 + (++mStackPointer));	//stkptr will be incremented before the read
 	return data;
 }
 void MOS6502::pushStack(const Byte& data) { 
-	mBus->write(data, 0x100 + mStackPointer--); //stkptr will be decremented after the push
+	mBus->write(data, 0x100 + mStackPointer--);			//stkptr will be decremented after the write
 }
 
 void MOS6502::writeMemory(const Byte& data, const Word& address) { 
@@ -58,7 +69,7 @@ void MOS6502::writeMemory(const Byte& data, const Word& address) {
 /* FLAG OPERATIONS */
 
 
-void MOS6502::setFlag(const processorFlag& flag, const bool& state) {
+void MOS6502::setFlag(const ProcessorFlag& flag, const bool& state) {
 	if (state) { mStatusRegister |= flag; } 
 	else { mStatusRegister &= ~flag; }
 }

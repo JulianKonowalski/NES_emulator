@@ -8,7 +8,9 @@
 #include "NES/Buses/CPUBus.h"
 #include "NES/Buses/PPUBus.h"
 #include "NES/Cartridge/Cartridge.h"
-#include "IO/Screen.h"
+
+#include "IO/Window.h"
+#include "IO/Joypad.h"
 
 class NES {
 public:
@@ -16,10 +18,12 @@ public:
 	using Byte = unsigned char;
 	using Word = unsigned short;
 
-	NES(Screen& screen, Cartridge& cartridge);
+	NES(Cartridge& cartridge);
 	void run(void);
 
 private:
+
+	Window mWindow;
 
 	Word mClock;
 
@@ -27,6 +31,7 @@ private:
 	PPU2C02 mPpu;
 	CPUBus mCpuBus;
 	PPUBus mPpuBus;
+	Joypad mJoypad;
 };
 
 #endif // !NES_H

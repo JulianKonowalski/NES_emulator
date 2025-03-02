@@ -4,17 +4,22 @@
 #include <string>
 
 #include "NES/PPU2C02/ColourLUT.h"
+#include "IO/Joypad.h"
 
-class Screen {
+class Window {
 public:
-    Screen(std::string title, int width, int height, short scale);
-    ~Screen(void);
+    Window(std::string title, int width, int height, short scale, Joypad& joypad);
+    ~Window(void);
 
     void swapBuffers(void);
     void drawPixel(const int& posX, const int& posY, const Colour& colour);
 
 private:
+
+    void handleInputs(void);
+
     short mScale;
+    Joypad* mJoypad;
 };
 
 #endif // !SCREEN_H

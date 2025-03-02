@@ -6,7 +6,7 @@
 #include "NES/MOS6502/AddressingMode.h"
 
 class MOS6502;
-enum processorFlag;
+enum ProcessorFlag;
 
 class Operation {
 public:
@@ -31,7 +31,7 @@ protected:
 	void setCpuStatus(MOS6502& cpu, const Byte& status);
 	void setCpuStackPointer(MOS6502& cpu, const Byte& value);
 	void setCpuProgramCounter(MOS6502& cpu, const Word& value);
-	void setCpuFlag(MOS6502& cpu, const processorFlag& flag, const bool& state);
+	void setCpuFlag(MOS6502& cpu, const ProcessorFlag& flag, const bool& state);
 
 	Byte fetchByte(MOS6502& cpu); //fetch from program counter address
 	Byte fetchByte(MOS6502& cpu, const Word& address); //fetch from absolute address

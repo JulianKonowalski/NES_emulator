@@ -6,7 +6,7 @@
 #include "NES/MOS6502/OpcodeLUT.h"
 #include "NES/Buses/CPUBus.h"
 
-enum processorFlag {
+enum ProcessorFlag {
 	FLAG_CARRY = 1,
 	FLAG_ZERO = 1 << 1,
 	FLAG_INTERRUPT_DISABLE = 1 << 2,
@@ -43,8 +43,12 @@ public:
 	void boot(CPUBus& bus);
 	void clock(void);
 
+	void nmi(void);
+
 	Word getFetchedAddress(void) const { return mFetchedAddress; }
 	Byte getFetched(void) const { return mAccAddressing ? mAccumulator : mBus->read(mFetchedAddress); }
+
+	bool isAccAddressed(void) { return mAccAddressing; }
 
 	Byte getCycles(void) const { return mCycles; }
 
@@ -58,6 +62,7 @@ public:
 private:
 
 	void readResetVector(void);
+	void readNmiVector(void);
 	void executeInstruction(void);
 
 	Byte fetchByte(void);					//fetch from programCounter address
@@ -79,8 +84,8 @@ private:
 	void setStackPointer(const Byte& data) { mStackPointer = data; }
 	void setProgramCounter(const Word& data) { mProgramCounter = data; }
 
-	void setFlag(const processorFlag& flag, const bool& value);
-	void setPorcessorStatus(const Byte& status) { mStatusRegister = status; }
+	void setFlag(const ProcessorFlag& flag, const bool& value);
+	void setPorcessorStatus(const Byte& status) { mStatusRegister = status | ProcessorFlag::FLAG_DEFAULT; }
 
 	CPUBus* mBus;
 

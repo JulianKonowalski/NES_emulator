@@ -1,13 +1,13 @@
-#include <iostream>
+#include <string>
 
 #include "NES/NES.h"
 #include "NES/Cartridge/Cartridge.h"
 
-const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\nestest.nes";
+//const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\PPU\\ntsc.nes";
+const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\pacMan.nes";
 
 int main(void) {
-    Screen screen("NES", 256, 240, 4);
     Cartridge cartridge(filepath);
-    NES nes(screen, cartridge);
+    NES nes(cartridge);
     nes.run();
 }

@@ -1,6 +1,6 @@
 set(
     IO_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/Screen.cpp
+    "Window.cpp"
 )
 
 add_library(
