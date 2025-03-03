@@ -71,10 +71,14 @@ public:
 
     void clock(void);
 
-    Byte readRegister(const Word& address);
-    void writeRegister(const Byte& data, const Word& address);
+    Byte readRegister(Word address);
+    void writeRegister(const Byte& data, Word address);
 
 private:
+
+    void updateState(void);
+    void draw(void);
+    void updatePosition(void);
 
     Byte fetchNametable(void);
     Byte fetchAttribute(void);
@@ -103,6 +107,8 @@ private:
 
     Word mPShiftReg1;       //1st bitplane of a tile (LSB)
     Word mPShiftReg2;       //2nd bitplane of a tile (MSB)
+    Word mCShiftReg1;       //1st colour bitplane of a tile (LSB)
+    Word mCShiftReg2;       //2nd colour bitplane of a tile (MSB)
 
     Byte mBgTileId;         //fetched tile index
     Byte mBgTileAttribute;  //fetched tile attribute index

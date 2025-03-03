@@ -28,7 +28,7 @@ void MOS6502::clock(void) { //execute only when cycle count == 0
 
 void MOS6502::nmi(void) {
 	this->pushStack(mProgramCounter >> 8);
-	this->pushStack(mProgramCounter);
+	this->pushStack((Byte)mProgramCounter);
 	this->pushStack(mStatusRegister);
 	this->readNmiVector();
 }

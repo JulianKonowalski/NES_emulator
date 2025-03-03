@@ -15,14 +15,10 @@ void Instruction::operator=(const Instruction& other) {
 
 void Instruction::fetchAddress(MOS6502& cpu) {
 	cpu.setFetchedAddress(mAddressingMode->getAddress(cpu));
-	auto addressingModeType = typeid(*mAddressingMode).hash_code();
-
-	//a latch to determine if the data should be fetched from the accumulator
-	if (addressingModeType == typeid(*(ACC::getInstance())).hash_code()) {
-		cpu.setAccAddressing(true);
-	} else {
-		cpu.setAccAddressing(false);
-	}
+	if (typeid(*mAddressingMode).hash_code() 
+		== typeid(*(ACC::getInstance())).hash_code()
+	) { cpu.setAccAddressing(true); } 
+	else { cpu.setAccAddressing(false); }
 }
 
 #include <iostream>

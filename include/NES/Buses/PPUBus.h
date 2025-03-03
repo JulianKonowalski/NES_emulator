@@ -20,8 +20,8 @@ private:
 
     Cartridge* mCartridge;
 
-    Byte mNameTable[2048] = { 0 };
-    Byte mPalettes[32] = { 0 };
+    Byte mPalette[32];
+    Byte mNametable[2][1024];
 
 };
 

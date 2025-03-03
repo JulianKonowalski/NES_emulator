@@ -8,7 +8,7 @@ PPU2C02::PPU2C02(std::function<void(void)> nmiCallback) :
     mWindow(nullptr),
     mBus(nullptr),
     mScanline(-1),
-    mCycle(0),
+    mCycle(-1),
     mPShiftReg1(0),
     mPShiftReg2(0),
     mBgTileId(0),
@@ -30,117 +30,156 @@ void PPU2C02::boot(PPUBus& bus, Window& window) {
 }
 
 void PPU2C02::clock(void) {
+    this->updateState();
+    this->draw();
+    this->updatePosition();
+    if (mScanline == -1 && mCycle == -1) { 
+        mWindow->swapBuffers();
+    }
+}
 
-    //update PPU state
+Byte PPU2C02::readRegister(Word address) {
+
+    address &= 0x7;
+
+    if(address == PPUCTRL 
+        || address == PPUMASK
+        || address == OAMADDR
+        || address == PPUSCROLL
+        || address == PPUADDR
+    ) { return 0; } //all are write only
+
+    Byte data; //helper variable
+    switch (address) {
+        case PPUSTATUS:
+            data = mRegisters[PPUSTATUS];
+            mRegisters[PPUSTATUS] &= ~(VBLANK);
+            mWLatch = 0;
+            return data;
+        case OAMDATA:
+
+            /*TODO*/
+
+            break;
+        case PPUDATA:
+            data = mDataBuffer;
+            mDataBuffer = mBus->read(mVRamAddr);
+            if (mVRamAddr >= 0x3F00)
+                data = mDataBuffer; //no delay for palette reads
+            mVRamAddr += mRegisters[PPUCTRL] & VRAMINC ? 32 : 1;
+            return data;
+    }
+}
+
+void PPU2C02::writeRegister(const Byte& data, Word address) {
+
+    address &= 0x7;
+
+    if (address == PPUSTATUS)
+        return; //read only
+    
+    switch (address) {
+        case PPUCTRL:
+            mRegisters[PPUCTRL] = data;
+            mTRamAddr = (
+                (mTRamAddr & ~(NT_SWITCH)) 
+                | ((data & 0b11) << 10)
+            );
+            break;
+        case PPUMASK:
+            mRegisters[PPUMASK] = data;
+            break;
+        case OAMADDR:
+
+
+
+            break;
+        case OAMDATA:
+
+
+
+            break;
+        case PPUSCROLL:
+            if (!mWLatch) {
+                mWLatch = 1;
+                mXScroll = data & 0b111;
+                mTRamAddr = (
+                    (mTRamAddr & ~(COARSE_X))
+                    | (data >> 3)
+                );
+            } else {
+                mWLatch = 0;
+                mTRamAddr = (
+                    (mTRamAddr & ~(FINE_Y | COARSE_Y))
+                    | ((data & 0b111) << 12)
+                    | ((data >> 3) << 5)
+                );
+            }
+            break;
+        case PPUADDR:
+            if (!mWLatch) {
+                mWLatch = 1;
+                mTRamAddr = (
+                    (mTRamAddr & 0x00FF) 
+                    | ((data & 0x3F) << 8)
+                );
+            } else {
+                mWLatch = 0;
+                mTRamAddr = (mTRamAddr & 0xFF00) | data;
+                mVRamAddr = mTRamAddr;
+            }
+            break;
+        case PPUDATA:
+            mBus->write(data, mVRamAddr);
+            mVRamAddr += mRegisters[PPUCTRL] & VRAMINC ? 32 : 1;
+            break;
+    }
+}
+
+void PPU2C02::updateState(void) {
+
+    if (mCycle < 0)
+        return;
+
     if (mScanline < 240) {       //visible + prerender scanline
 
         if (mScanline == -1) {   //prerender scanline
-            if (mCycle == 0) { this->preRenderRoutine(); }
-            else if (mCycle >= 279 && mCycle < 304) { this->resetY(); }
+            if (mCycle == 0)
+                this->preRenderRoutine();
+            else if (mCycle >= 279 && mCycle < 304)
+                this->resetY();
         }
 
-        if (mCycle < 0) { /* DO NOTHING */ }           //prerender cycle
-        else if (mCycle < 256 || (mCycle >= 320 && mCycle < 336)) { this->updateDataRegisters(); } //visible
+        else if (mCycle < 256 
+            || (mCycle >= 320 && mCycle < 336)) 
+            this->updateDataRegisters();
 
-        if (mCycle == 255) { this->incrementY(); }     //end of scanline
-        else if (mCycle == 256) { this->resetX(); }    //end of scanline
+        if (mCycle == 255) 
+            this->incrementY();
+        else if (mCycle == 256)
+            this->resetX();
 
     }
-    else if (mScanline == 240) { /* DO NOTHING */ }                             //postrender scanline
-    else if (mScanline == 241 && mCycle == 0) { this->postRenderRoutine(); }    //start of vblank
+    else if (mScanline == 241 && mCycle == 0) 
+        this->postRenderRoutine();
+}
 
-    //draw
-    Byte shift = 15 - mXScroll;
-    Byte pixelCode = ((mPShiftReg1 & (1 << shift)) >> shift) + ((mPShiftReg2 & (1 << shift)) >> shift);
+void PPU2C02::draw(void) {
+    if (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND) {
+        Byte shift = 15 - mXScroll;
+        Byte pixelCode = ((mPShiftReg1 & (1 << shift)) >> shift) + ((mPShiftReg2 & (1 << shift)) >> shift);
+        Byte paletteCode = ((mCShiftReg1 & (1 << shift)) >> shift) + ((mCShiftReg2 & (1 << shift)) >> shift);
+        Byte colourCode = mBus->read(0x3F00 + (paletteCode << 2) + pixelCode);
+        mWindow->drawPixel(mCycle, mScanline, mColours[colourCode & 0x3F]);
+    }
+}
 
-    //mBgTileAttribute = 0; //FIX THE COLOURS
-
-    Byte colourCode = mBus->read(0x3F00 | (mBgTileAttribute << 2) | pixelCode);
-    mWindow->drawPixel(mCycle, mScanline, mColours[colourCode]);
-
-    //update screen position
+void PPU2C02::updatePosition(void) {
     if (++mCycle > 340) {           //341 cycles per scanline
         mCycle = -1;
         if (++mScanline > 261) {    //262 scanlines
             mScanline = -1;
-            mWindow->swapBuffers();
         } 
-    }
-
-}
-
-Byte PPU2C02::readRegister(const Word& address) {
-    Byte operation = address & 0x7;
-    if (operation == PPUCTRL
-        || operation == PPUMASK
-        || operation == OAMADDR
-        || operation == PPUADDR
-        || operation == PPUSCROLL
-    ) { return 0; } //all are write only
-
-    Byte data = 0;  //helper variable
-    switch (operation) {
-    case PPUSTATUS:
-        data = mRegisters[PPUSTATUS];
-        mRegisters[PPUSTATUS] &= ~STATUS_REGISTER::VBLANK;
-        mWLatch = 0;
-        return data;
-    case OAMDATA: 
-        /* TODO */ 
-        return 0;
-    case PPUDATA:
-        if (mVRamAddr >= 0x3F00) {  //no delay for palette reads 
-            mDataBuffer = mBus->read(mVRamAddr);
-            ++mVRamAddr; 
-            return mDataBuffer;
-        }
-        data = mDataBuffer;
-        mDataBuffer = mBus->read(mVRamAddr);
-        mVRamAddr += mRegisters[PPUCTRL] & CTRL_REGISTER::VRAMINC ? 32 : 1;
-        return data;
-    }
-}
-
-void PPU2C02::writeRegister(const Byte& data, const Word& address) {
-    switch (address &0x7) {
-    case PPUCTRL: 
-        mRegisters[PPUCTRL] = data;
-        mTRamAddr = (mTRamAddr & ~VRAM_MASK::NT_SWITCH) | ((data & 0x3) << 10);
-        break;
-    case PPUMASK: mRegisters[PPUMASK] = data; break;
-    case PPUSTATUS: break; //read only
-    case OAMADDR: mRegisters[OAMADDR] = data; break;
-    case OAMDATA: 
-        /* TODO */ 
-        break;
-    case PPUSCROLL:
-        if (!mWLatch) {
-            mTRamAddr = (mTRamAddr & ~VRAM_MASK::COARSE_X) | (data >> 3);
-            mXScroll = data & 0x7;
-            mWLatch = 1;
-        } else {
-            mTRamAddr = (
-                (mTRamAddr & ~(VRAM_MASK::COARSE_Y | VRAM_MASK::FINE_Y)) | 
-                ((data & 0b111) << 12) | 
-                ((data >> 3) << 5)
-            );
-            mWLatch = 0;
-        } 
-        break;
-    case PPUADDR:
-        if (!mWLatch) {
-            mTRamAddr = (mTRamAddr & 0x00FF) | (data & 0x3F) << 8;
-            mWLatch = 1;
-        } else {
-            mTRamAddr = (mTRamAddr & 0xFF00) | data;
-            mVRamAddr = mTRamAddr;
-            mWLatch = 0;
-        }
-        break;
-    case PPUDATA:
-        mBus->write(data, mVRamAddr);
-        mVRamAddr += mRegisters[PPUCTRL] & CTRL_REGISTER::VRAMINC ? 32 : 1;
-        break;
     }
 }
 
@@ -177,13 +216,17 @@ Byte PPU2C02::fetchTileData(const bool& fetchMsb) {
 
 void PPU2C02::updateDataRegisters(void) {
 
-    mPShiftReg1 <<= 1;
-    mPShiftReg2 <<= 1;
+    if (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND) {
+        mPShiftReg1 <<= 1; mPShiftReg2 <<= 1;
+        mCShiftReg1 <<= 1; mCShiftReg2 <<= 1;
+    }
 
     switch (mCycle % 8) {
     case RENDER_STAGE::FETCH_NT:
-        mPShiftReg1 |= mBgTileLsb;
+        mPShiftReg1 |= mBgTileLsb; 
         mPShiftReg2 |= mBgTileMsb;
+        mCShiftReg1 |= mBgTileAttribute & 0b01 ? 0xFF : 0x00;
+        mCShiftReg2 |= mBgTileAttribute & 0b10 ? 0xFF : 0x00;
         mBgTileId = this->fetchNametable(); 
         break;
     case RENDER_STAGE::FETCH_AT: mBgTileAttribute = this->fetchAttribute(); break;
@@ -211,7 +254,7 @@ void PPU2C02::incrementX(void) {
     ) {
         Byte X = mVRamAddr & VRAM_MASK::COARSE_X;   
         if (X < 31) {
-            mVRamAddr = (mVRamAddr & ~VRAM_MASK::COARSE_X) | ++X;
+            mVRamAddr = (mVRamAddr & ~VRAM_MASK::COARSE_X) | (++X & COARSE_X);
             return;
         }
         mVRamAddr = (
@@ -223,32 +266,32 @@ void PPU2C02::incrementX(void) {
 
 void PPU2C02::incrementY(void) {
     if (
-        (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND)
-        || (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_SPRITES)
+        (mRegisters[PPUMASK] & RENDER_BACKGROUND)
+        || (mRegisters[PPUMASK] & RENDER_SPRITES)
     ) {
-        Byte fineY = (mVRamAddr & VRAM_MASK::FINE_Y) >> 12;
+        Byte fineY = (mVRamAddr & FINE_Y) >> 12;
         if (fineY < 7) {
-            mVRamAddr = (mVRamAddr & ~VRAM_MASK::FINE_Y) | (++fineY << 12);
+            mVRamAddr = (mVRamAddr & ~FINE_Y) | ((++fineY << 12) & FINE_Y);
             return;
         }
-        Byte coarseY = (mVRamAddr & VRAM_MASK::COARSE_Y) >> 5;
+        Byte coarseY = (mVRamAddr & COARSE_Y) >> 5;
         if (coarseY < 29) {
-            mVRamAddr = (mVRamAddr & ~(VRAM_MASK::FINE_Y | VRAM_MASK::COARSE_Y)) | (++coarseY << 5);
+            mVRamAddr = (mVRamAddr & ~(FINE_Y | COARSE_Y)) | ((++coarseY << 5) & COARSE_Y);
             return;
         }
         mVRamAddr = (
-            (mVRamAddr & ~(VRAM_MASK::FINE_Y | VRAM_MASK::NT_Y | VRAM_MASK::COARSE_Y) 
-            | (~(mVRamAddr & VRAM_MASK::NT_Y) & VRAM_MASK::NT_Y))
+            (mVRamAddr & ~(FINE_Y | NT_Y | COARSE_Y) 
+            | (~(mVRamAddr & NT_Y) & NT_Y))
         );
     }
 }
 
 void PPU2C02::resetX(void) {
     if (
-        (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND)
-        || (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_SPRITES)
+        (mRegisters[PPUMASK] & RENDER_BACKGROUND)
+        || (mRegisters[PPUMASK] & RENDER_SPRITES)
     ) {
-        Word mask = VRAM_MASK::COARSE_X | VRAM_MASK::NT_X;
+        Word mask = COARSE_X | NT_X;
         mVRamAddr = (
             (mVRamAddr & ~mask)
             | (mTRamAddr & mask)
@@ -258,10 +301,10 @@ void PPU2C02::resetX(void) {
 
 void PPU2C02::resetY(void) {
     if (
-        (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND)
-        || (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_SPRITES)
+        (mRegisters[PPUMASK] & RENDER_BACKGROUND)
+        || (mRegisters[PPUMASK] & RENDER_SPRITES)
     ) {
-        Word mask = VRAM_MASK::COARSE_Y | VRAM_MASK::FINE_Y | VRAM_MASK::NT_Y;
+        Word mask = COARSE_Y | FINE_Y | NT_Y;
         mVRamAddr = (
             (mVRamAddr & ~mask)
             | (mTRamAddr & mask)
