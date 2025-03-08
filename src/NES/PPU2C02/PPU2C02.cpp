@@ -5,21 +5,23 @@ using Word = PPU2C02::Word;
 
 PPU2C02::PPU2C02(std::function<void(void)> nmiCallback) :
     mNmiCallback(nmiCallback),
-    mWindow(nullptr),
     mBus(nullptr),
-    mScanline(-1),
-    mCycle(-1),
-    mPShiftReg1(0),
-    mPShiftReg2(0),
+    mWindow(nullptr),
+    mVRamAddr(0),
+    mTRamAddr(0),
+    mFineX(0),
     mBgTileId(0),
     mBgTileAttribute(0),
     mBgTileLsb(0),
     mBgTileMsb(0),
-    mVRamAddr(0),
-    mTRamAddr(0),
-    mXScroll(0),
+    mPShiftReg1(0),
+    mPShiftReg2(0),
+    mCShiftReg1(0),
+    mCShiftReg2(0),
     mWLatch(0),
-    mDataBuffer(0)
+    mDataBuffer(0),
+    mScanline(-1),
+    mCycle(-1)
 {
     for (int i = 0; i < 8; ++i) { mRegisters[i] = 0; }
 }
@@ -59,8 +61,7 @@ Byte PPU2C02::readRegister(Word address) {
         case OAMDATA:
 
             /*TODO*/
-
-            break;
+            return 0;
         case PPUDATA:
             data = mDataBuffer;
             mDataBuffer = mBus->read(mVRamAddr);
@@ -102,7 +103,7 @@ void PPU2C02::writeRegister(const Byte& data, Word address) {
         case PPUSCROLL:
             if (!mWLatch) {
                 mWLatch = 1;
-                mXScroll = data & 0b111;
+                mFineX = data & 0b111;
                 mTRamAddr = (
                     (mTRamAddr & ~(COARSE_X))
                     | (data >> 3)
@@ -150,7 +151,7 @@ void PPU2C02::updateState(void) {
                 this->resetY();
         }
 
-        else if (mCycle < 256 
+        if (mCycle < 256 
             || (mCycle >= 320 && mCycle < 336)) 
             this->updateDataRegisters();
 
@@ -166,11 +167,17 @@ void PPU2C02::updateState(void) {
 
 void PPU2C02::draw(void) {
     if (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND) {
-        Byte shift = 15 - mXScroll;
-        Byte pixelCode = ((mPShiftReg1 & (1 << shift)) >> shift) + ((mPShiftReg2 & (1 << shift)) >> shift);
-        Byte paletteCode = ((mCShiftReg1 & (1 << shift)) >> shift) + ((mCShiftReg2 & (1 << shift)) >> shift);
+        Byte shift = 15 - mFineX;
+        Byte pixelCode = (
+            ((mPShiftReg1 & (1 << shift)) >> shift)         //low byte
+            | ((mPShiftReg2 & (1 << shift)) >> (shift - 1)) //high byte
+        );
+        Byte paletteCode = (
+            ((mCShiftReg1 & (1 << shift)) >> shift)         //low byte
+            | ((mCShiftReg2 & (1 << shift)) >> (shift - 1)) //high byte
+        );
         Byte colourCode = mBus->read(0x3F00 + (paletteCode << 2) + pixelCode);
-        mWindow->drawPixel(mCycle, mScanline, mColours[colourCode & 0x3F]);
+        mWindow->drawPixel(mCycle, mScanline, mColours[colourCode]);
     }
 }
 
@@ -184,10 +191,10 @@ void PPU2C02::updatePosition(void) {
 }
 
 Byte PPU2C02::fetchNametable(void) {
+    Word mask = COARSE_X | COARSE_Y | NT_SWITCH;
     return mBus->read(
-        0x2000                              //base address
-        + (mVRamAddr & VRAM_MASK::COARSE_X) //coarse X offset
-        + (mVRamAddr & VRAM_MASK::COARSE_Y) //coarse Y offset
+        0x2000                  //base address
+        | (mVRamAddr & mask)    //tile offset
     );
 }
 
@@ -227,7 +234,7 @@ void PPU2C02::updateDataRegisters(void) {
         mPShiftReg2 |= mBgTileMsb;
         mCShiftReg1 |= mBgTileAttribute & 0b01 ? 0xFF : 0x00;
         mCShiftReg2 |= mBgTileAttribute & 0b10 ? 0xFF : 0x00;
-        mBgTileId = this->fetchNametable(); 
+        mBgTileId = this->fetchNametable();
         break;
     case RENDER_STAGE::FETCH_AT: mBgTileAttribute = this->fetchAttribute(); break;
     case RENDER_STAGE::FETCH_TILE_LSB: mBgTileLsb = this->fetchTileData(false); break;

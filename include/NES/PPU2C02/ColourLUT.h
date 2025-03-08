@@ -36,7 +36,7 @@ class ColourLUT {
 
     friend class PPU2C02;
 
-    const Colour& operator[](const Byte& code) const { return mColours[code]; }
+    const Colour& operator[](const Byte& code) const { return mColours[code & 0x3F]; }
 
     Colour mColours[64] = {
         Colour(84, 84, 84),

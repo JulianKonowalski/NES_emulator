@@ -103,17 +103,17 @@ private:
 
     Word mVRamAddr;         //vram adderss
     Word mTRamAddr;         //temporary vram address (address of the top left onscreen tile)
-    Byte mXScroll;          //fine X scroll
-
-    Word mPShiftReg1;       //1st bitplane of a tile (LSB)
-    Word mPShiftReg2;       //2nd bitplane of a tile (MSB)
-    Word mCShiftReg1;       //1st colour bitplane of a tile (LSB)
-    Word mCShiftReg2;       //2nd colour bitplane of a tile (MSB)
+    Byte mFineX;            //fine X scroll
 
     Byte mBgTileId;         //fetched tile index
     Byte mBgTileAttribute;  //fetched tile attribute index
     Byte mBgTileLsb;        //fetched tile 1st bitplane
     Byte mBgTileMsb;        //fetched tile 2nd bitplane
+
+    Word mPShiftReg1;       //1st bitplane of a tile (LSB)
+    Word mPShiftReg2;       //2nd bitplane of a tile (MSB)
+    Word mCShiftReg1;       //1st colour bitplane of a tile (LSB)
+    Word mCShiftReg2;       //2nd colour bitplane of a tile (MSB)
 
     Byte mWLatch;           //1st or 2nd write toggle
     Byte mDataBuffer;       //data fetched from PPUADDR
