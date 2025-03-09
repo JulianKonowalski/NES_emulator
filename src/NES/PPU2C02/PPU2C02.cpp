@@ -1,5 +1,7 @@
 #include "NES/PPU2C02/PPU2C02.h"
 
+#include <cstdlib>
+
 using Byte = PPU2C02::Byte;
 using Word = PPU2C02::Word;
 
@@ -7,6 +9,7 @@ PPU2C02::PPU2C02(std::function<void(void)> nmiCallback) :
     mNmiCallback(nmiCallback),
     mBus(nullptr),
     mWindow(nullptr),
+    mSpriteCount(0),
     mVRamAddr(0),
     mTRamAddr(0),
     mFineX(0),
@@ -14,16 +17,26 @@ PPU2C02::PPU2C02(std::function<void(void)> nmiCallback) :
     mBgTileAttribute(0),
     mBgTileLsb(0),
     mBgTileMsb(0),
-    mPShiftReg1(0),
-    mPShiftReg2(0),
-    mCShiftReg1(0),
-    mCShiftReg2(0),
+    mBgPatternLo(0),
+    mBgPatternHi(0),
+    mBgAttribLo(0),
+    mBgAttribHi(0),
+    mFgTileY(0),
+    mFgTileId(0),
+    mFgTileAttribute(0),
+    mFgTileX(0),
     mWLatch(0),
     mDataBuffer(0),
     mScanline(-1),
     mCycle(-1)
 {
-    for (int i = 0; i < 8; ++i) { mRegisters[i] = 0; }
+    memset(mRegisters, 0, 8);
+    memset(mOam, 0, 256);
+    memset(mSecondaryOam, 0, 32);
+    memset(mFgPatternLo, 0, 8);
+    memset(mFgPatternHi, 0, 8);
+    memset(mFgAttrib, 0, 8);
+    memset(mSpritesXPos, 0, 8);
 }
 
 void PPU2C02::boot(PPUBus& bus, Window& window) {
@@ -35,9 +48,8 @@ void PPU2C02::clock(void) {
     this->updateState();
     this->draw();
     this->updatePosition();
-    if (mScanline == -1 && mCycle == -1) { 
+    if (mScanline == -1 && mCycle == -1)
         mWindow->swapBuffers();
-    }
 }
 
 Byte PPU2C02::readRegister(Word address) {
@@ -59,9 +71,7 @@ Byte PPU2C02::readRegister(Word address) {
             mWLatch = 0;
             return data;
         case OAMDATA:
-
-            /*TODO*/
-            return 0;
+            return mOam[mRegisters[OAMADDR]];
         case PPUDATA:
             data = mDataBuffer;
             mDataBuffer = mBus->read(mVRamAddr);
@@ -91,14 +101,11 @@ void PPU2C02::writeRegister(const Byte& data, Word address) {
             mRegisters[PPUMASK] = data;
             break;
         case OAMADDR:
-
-
-
+            mRegisters[OAMADDR] = data;
             break;
         case OAMDATA:
-
-
-
+            mOam[mRegisters[OAMADDR]] = data;
+            ++mRegisters[OAMADDR];
             break;
         case PPUSCROLL:
             if (!mWLatch) {
@@ -137,28 +144,51 @@ void PPU2C02::writeRegister(const Byte& data, Word address) {
     }
 }
 
+void PPU2C02::startDmaTransfer(const Byte& data) {
+    mRegisters[OAMDMA] = data;
+    mRegisters[OAMADDR] = 0x00;
+}
+
+void PPU2C02::writeDma(const Byte& data) {
+    mOam[mRegisters[OAMADDR]] = data;
+    ++mRegisters[OAMADDR];
+}
+
 void PPU2C02::updateState(void) {
 
-    if (mCycle < 0)
+    if (mCycle < 0) //prerender cycle
         return;
 
-    if (mScanline < 240) {       //visible + prerender scanline
+    if (mScanline < 240) {      //visible + prerender scanline
 
-        if (mScanline == -1) {   //prerender scanline
-            if (mCycle == 0)
+        if (mScanline == -1) {  //specific prerender scanline behaviour
+            if (mCycle == 0)    //the rest of the scanline is standard
                 this->preRenderRoutine();
             else if (mCycle >= 279 && mCycle < 304)
                 this->resetY();
         }
 
-        if (mCycle < 256 
-            || (mCycle >= 320 && mCycle < 336)) 
-            this->updateDataRegisters();
+        if (mCycle < 256
+            || (mCycle >= 320 && mCycle < 336)) {
+            this->updateShifters();
+            this->updateBackgroundData();
+        }
 
         if (mCycle == 255) 
             this->incrementY();
-        else if (mCycle == 256)
+
+        if (mCycle == 256)
             this->resetX();
+
+        if (mCycle >= 256 && mCycle < 320)
+            mRegisters[OAMADDR] = 0x00;     //reset OAMADDR
+        
+        if (mCycle == 339 && mScanline >= 0) { //update sprite data on the last cycle
+            memset(mSecondaryOam, 0xFF, 32); //clear secondary OAM
+            mSpriteCount = 0;
+            this->evaluateOam();
+            this->updateSpriteData();
+        }
 
     }
     else if (mScanline == 241 && mCycle == 0) 
@@ -166,31 +196,72 @@ void PPU2C02::updateState(void) {
 }
 
 void PPU2C02::draw(void) {
+
+    Byte bgPixelCode = 0;
+    Byte bgPaletteCode = 0;
+
     if (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND) {
         Byte shift = 15 - mFineX;
-        Byte pixelCode = (
-            ((mPShiftReg1 & (1 << shift)) >> shift)         //low byte
-            | ((mPShiftReg2 & (1 << shift)) >> (shift - 1)) //high byte
+        bgPixelCode = (
+            ((mBgPatternLo & (1 << shift)) >> shift)         //low byte
+            | ((mBgPatternHi & (1 << shift)) >> (shift - 1)) //high byte
         );
-        Byte paletteCode = (
-            ((mCShiftReg1 & (1 << shift)) >> shift)         //low byte
-            | ((mCShiftReg2 & (1 << shift)) >> (shift - 1)) //high byte
+        bgPaletteCode = (
+            ((mBgAttribLo & (1 << shift)) >> shift)         //low byte
+            | ((mBgAttribHi & (1 << shift)) >> (shift - 1)) //high byte
         );
-        Byte colourCode = mBus->read(0x3F00 + (paletteCode << 2) + pixelCode);
-        mWindow->drawPixel(mCycle, mScanline, mColours[colourCode]);
     }
+
+    Byte fgPixelCode = 0;
+    Byte fgPaletteCode = 0;
+    Byte fgPriority = 0;
+
+    if (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_SPRITES) {
+        for (int i = 0; i < 8; ++i) {
+            if (mSpritesXPos[i] != 0) { continue; } //sprite not visible
+            fgPixelCode = ((mFgPatternHi[i] >> 7) << 1) | (mFgPatternLo[i] >> 7);
+            fgPaletteCode = (mFgAttrib[i] & SPRITE_MASK::PALETTE) + 0x04;
+            fgPriority = (mFgAttrib[i] & SPRITE_MASK::PRIORITY) == 0;  //to test the fg against the bg
+            if (fgPixelCode != 0) { break; } //found sprite with highest priority
+        }
+    }
+
+    Byte pixelCode = bgPixelCode;
+    Byte paletteCode = bgPaletteCode;
+
+    if (bgPixelCode == 0 && fgPixelCode == 0) {
+        pixelCode = 0;
+        paletteCode = 0;
+    } else if (bgPixelCode == 0 && fgPixelCode > 0) {
+        pixelCode = fgPixelCode;
+        paletteCode = fgPaletteCode;
+    } else if (bgPixelCode > 0 && fgPixelCode == 0) {
+        pixelCode = bgPixelCode;
+        paletteCode = bgPaletteCode;
+    } else {
+        if (fgPriority) {
+            pixelCode = fgPixelCode;
+            paletteCode = fgPaletteCode;
+        } else {
+            pixelCode = bgPixelCode;
+            paletteCode = bgPaletteCode;
+        }
+    }
+
+    Byte colourCode = mBus->read(0x3F00 + (paletteCode << 2) + pixelCode);
+    mWindow->drawPixel(mCycle, mScanline, mColours[colourCode]);
 }
 
 void PPU2C02::updatePosition(void) {
-    if (++mCycle > 340) {           //341 cycles per scanline
+    if (++mCycle > 339) {           //341 cycles per scanline (-1 through 339)
         mCycle = -1;
-        if (++mScanline > 261) {    //262 scanlines
+        if (++mScanline > 260) {    //262 scanlines (-1 through 260)
             mScanline = -1;
         } 
     }
 }
 
-Byte PPU2C02::fetchNametable(void) {
+Byte PPU2C02::fetchBgNametable(void) {
     Word mask = COARSE_X | COARSE_Y | NT_SWITCH;
     return mBus->read(
         0x2000                  //base address
@@ -198,7 +269,7 @@ Byte PPU2C02::fetchNametable(void) {
     );
 }
 
-Byte PPU2C02::fetchAttribute(void) {
+Byte PPU2C02::fetchBgAttribute(void) {
     Byte attribute = mBus->read(
         0x23C0                                              //base attribute table address
         | (mVRamAddr & VRAM_MASK::NT_SWITCH)                //nametable select
@@ -212,7 +283,7 @@ Byte PPU2C02::fetchAttribute(void) {
 
 }
 
-Byte PPU2C02::fetchTileData(const bool& fetchMsb) {
+Byte PPU2C02::fetchBgTileData(const bool& fetchMsb) {
     return mBus->read(
         (mRegisters[PPUCTRL] & CTRL_REGISTER::BPTADDR ? 0x1000 : 0) //background address offset
         + (mBgTileId << 4)                                          //tileId * tileSize(16)
@@ -221,37 +292,167 @@ Byte PPU2C02::fetchTileData(const bool& fetchMsb) {
     );
 }
 
-void PPU2C02::updateDataRegisters(void) {
+Byte PPU2C02::fetchFgTileData(const bool& fetchMsb) {
 
-    if (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND) {
-        mPShiftReg1 <<= 1; mPShiftReg2 <<= 1;
-        mCShiftReg1 <<= 1; mCShiftReg2 <<= 1;
+    Word tileDataAddr = 0;
+
+    if (mRegisters[PPUCTRL] & CTRL_REGISTER::SPRTSIZ) { //8x16 mode
+
+        if (mFgTileAttribute & SPRITE_MASK::FLIP_V) {   //flipped vertically
+            if ((mScanline - mFgTileY) < 8) {   //top half
+                tileDataAddr = (
+                    ((mFgTileId & 0x01) << 12)
+                    | (((mFgTileId & 0xFE) + 1) << 4)
+                    | (7 - ((mScanline - mFgTileY) & 0x07))
+                );
+            } else {                            //bottom half
+                tileDataAddr = (
+                    ((mFgTileId & 0x01) << 12)
+                    | ((mFgTileId & 0xFE) << 4)
+                    | (7 - ((mScanline - mFgTileY) & 0x07))
+                );
+            }
+        } else {    //normal
+            if ((mScanline - mFgTileY) < 8) {   //top half
+                tileDataAddr = (
+                    ((mFgTileId & 0x01) << 12)
+                    | ((mFgTileId & 0xFE) << 4)
+                    | ((mScanline - mFgTileY) & 0x07)
+                );
+            } else {                            //bottom half
+                tileDataAddr = (
+                    ((mFgTileId & 0x01) << 12)
+                    | (((mFgTileId & 0xFE) + 1) << 4)
+                    | ((mScanline - mFgTileY) & 0x07)
+                );               
+            }
+        }
+
+    } else { //8x8 mode
+
+        if (mFgTileAttribute & SPRITE_MASK::FLIP_V) {   //flipped verically
+            tileDataAddr = (
+                ((mRegisters[PPUCTRL] & CTRL_REGISTER::SPRADDR) << 9)
+                | (mFgTileId << 4)
+                | (7 - (mScanline - mFgTileY))
+            );
+        } else {    //normal
+            tileDataAddr = (
+                ((mRegisters[PPUCTRL] & CTRL_REGISTER::SPRADDR) << 9)
+                | (mFgTileId << 4)
+                | (mScanline - mFgTileY)
+            );
+        }
+
     }
+
+    tileDataAddr += fetchMsb ? 8 : 0;
+    Byte tileData = mBus->read(tileDataAddr);
+
+    if (mFgTileAttribute & SPRITE_MASK::FLIP_H) {
+        tileData = (tileData & 0xF0) >> 4 | (tileData & 0x0F) << 4;
+        tileData = (tileData & 0xCC) >> 2 | (tileData & 0x33) << 2;
+        tileData = (tileData & 0xAA) >> 1 | (tileData & 0x55) << 1;
+    }
+
+    return tileData;
+}
+
+void PPU2C02::updateBackgroundData(void) {
 
     switch (mCycle % 8) {
-    case RENDER_STAGE::FETCH_NT:
-        mPShiftReg1 |= mBgTileLsb; 
-        mPShiftReg2 |= mBgTileMsb;
-        mCShiftReg1 |= mBgTileAttribute & 0b01 ? 0xFF : 0x00;
-        mCShiftReg2 |= mBgTileAttribute & 0b10 ? 0xFF : 0x00;
-        mBgTileId = this->fetchNametable();
-        break;
-    case RENDER_STAGE::FETCH_AT: mBgTileAttribute = this->fetchAttribute(); break;
-    case RENDER_STAGE::FETCH_TILE_LSB: mBgTileLsb = this->fetchTileData(false); break;
-    case RENDER_STAGE::FETCH_TILE_MSB: mBgTileMsb = this->fetchTileData(true); break;
-    case RENDER_STAGE::INC_V: this->incrementX(); break;
+        case BG_FETCH_NT:
+            mBgPatternLo |= mBgTileLsb; 
+            mBgPatternHi |= mBgTileMsb;
+            mBgAttribLo |= mBgTileAttribute & 0b01 ? 0xFF : 0x00;
+            mBgAttribHi |= mBgTileAttribute & 0b10 ? 0xFF : 0x00;
+            mBgTileId = this->fetchBgNametable();
+            break;
+        case BG_FETCH_AT: mBgTileAttribute = this->fetchBgAttribute(); break;
+        case BG_FETCH_LSB: mBgTileLsb = this->fetchBgTileData(false); break;
+        case BG_FETCH_MSB: mBgTileMsb = this->fetchBgTileData(true); break;
+        case BG_INC_H: this->incrementX(); break;
     }
+
+}
+
+void PPU2C02::updateSpriteData(void) {
+
+    Byte secondaryOamAddr = 0;
+
+    for (int i = 0; i < mSpriteCount; ++i) {
+
+        mFgTileY = mSecondaryOam[secondaryOamAddr++];
+        mFgTileId = mSecondaryOam[secondaryOamAddr++];
+        mFgTileAttribute = mSecondaryOam[secondaryOamAddr++];
+        mSpritesXPos[i] = mSecondaryOam[secondaryOamAddr++];
+
+        mFgPatternLo[i] = this->fetchFgTileData(false);
+        mFgPatternHi[i] = this->fetchFgTileData(true);
+        mFgAttrib[i] = mFgTileAttribute;
+
+    }
+
+}
+
+void PPU2C02::updateShifters(void) {
+
+    if (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND) {
+        mBgPatternLo <<= 1; mBgPatternHi <<= 1;
+        mBgAttribLo <<= 1; mBgAttribHi <<= 1;
+    }
+
+    if (mRegisters[PPUMASK] & MASK_REGISTER::RENDER_SPRITES
+        && mCycle >= 0 && mCycle < 256) {
+        for (int i = 0; i < 8; ++i) {
+            if (mSpritesXPos[i] > 0) {
+                --mSpritesXPos[i];
+            } else {
+                mFgPatternLo[i] <<= 1; mFgPatternHi[i] <<= 1;
+            }
+        }
+    }
+}
+
+void PPU2C02::evaluateOam(void) {
+
+    Byte secondaryOamAddr = 0;
+
+    for (int i = 0; i < 64; ++i) {
+
+        Byte diff = mScanline - mOam[i * 4]; //difference in Y coord of scanline and sprite
+        Byte spriteSize = mRegisters[PPUCTRL] & CTRL_REGISTER::SPRTSIZ ? 16 : 8;
+        if (diff < 0 || diff >= spriteSize) { continue; } //sprite not visible
+
+        if (secondaryOamAddr > 31) { //more than 8 sprites on one scanline
+            mRegisters[PPUSTATUS] |= STATUS_REGISTER::SPRITE_OVERFLOW;
+            break;
+        }
+
+        memcpy(&mSecondaryOam[secondaryOamAddr], &mOam[i * 4], 4);
+        secondaryOamAddr += 4; //increment by the sprite size
+        ++mSpriteCount;
+
+    }
+
 }
 
 void PPU2C02::preRenderRoutine(void) {
     mRegisters[PPUSTATUS] &= ~STATUS_REGISTER::VBLANK;
     mRegisters[PPUSTATUS] &= ~STATUS_REGISTER::SPRITE_0;
     mRegisters[PPUSTATUS] &= ~STATUS_REGISTER::SPRITE_OVERFLOW;
+
+    //clear the sprite data
+    memset(mFgPatternLo, 0, 8);
+    memset(mFgPatternHi, 0, 8);
+    memset(mFgAttrib, 0, 8);
+    memset(mSpritesXPos, 0, 8);
 }
 
 void PPU2C02::postRenderRoutine(void) {
     mRegisters[PPUSTATUS] |= STATUS_REGISTER::VBLANK;
     if (mRegisters[PPUCTRL] & CTRL_REGISTER::VBNMIEN) { this->mNmiCallback(); }
+
 }
 
 void PPU2C02::incrementX(void) {

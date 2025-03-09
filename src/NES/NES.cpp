@@ -6,7 +6,7 @@ NES::NES(Cartridge& cartridge) :
     mWindow("NES", 256, 240, 4, mJoypad),
 	mClock(0),
 	mPpu(std::bind(&MOS6502::nmi, &mCpu)),
-	mCpuBus(mPpu, cartridge, mJoypad),
+	mCpuBus(mCpu, mPpu, cartridge, mJoypad, mClock),
 	mPpuBus(cartridge)
 {
 	mCpu.boot(mCpuBus); 

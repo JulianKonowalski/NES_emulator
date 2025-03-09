@@ -3,8 +3,8 @@
 #include "NES/NES.h"
 #include "NES/Cartridge/Cartridge.h"
 
-//const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\PPU\\ntsc.nes";
-const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\iceClimber.nes";
+//const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\PPU\\scanline.nes";
+const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\donkeyKong.nes";
 
 int main(void) {
     Cartridge cartridge(filepath);

@@ -44,6 +44,8 @@ public:
 	void clock(void);
 
 	void nmi(void);
+	void startDmaTransfer(void) { mDmaTransferOn = true; }
+	void stopDmaTransfer(void) { mDmaTransferOn = false; }
 
 	Word getFetchedAddress(void) const { return mFetchedAddress; }
 	Byte getFetched(void) const { return mAccAddressing ? mAccumulator : mBus->read(mFetchedAddress); }
@@ -95,6 +97,8 @@ private:
 
 	Word mFetchedAddress;	//temporary register for storing the address of loaded data
 	bool mAccAddressing;	//to determine if the data should be fetched from the accumulator
+
+	bool mDmaTransferOn;	//to determine if the DMA transfer is currently running
 
 	Word mProgramCounter;
 	Byte mStackPointer;

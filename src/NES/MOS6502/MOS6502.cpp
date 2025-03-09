@@ -5,6 +5,7 @@ using Byte = MOS6502::Byte;
 MOS6502::MOS6502() : 
 	mCycles(8),
 	mAccAddressing(false),
+	mDmaTransferOn(false),
 	mFetchedAddress(0),
 	mProgramCounter(0),
 	mStackPointer(0),
@@ -21,7 +22,8 @@ void MOS6502::boot(CPUBus& bus) {
 	this->readResetVector();
 }
 
-void MOS6502::clock(void) { //execute only when cycle count == 0
+void MOS6502::clock(void) {
+	if (mDmaTransferOn) { mBus->dmaTransfer(); return; }
 	if (!mCycles) { this->executeInstruction(); }
 	--mCycles;
 }

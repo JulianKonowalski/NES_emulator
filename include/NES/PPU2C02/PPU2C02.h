@@ -8,12 +8,20 @@
 #include "NES/Buses/PPUBus.h"
 #include "NES/PPU2C02/ColourLUT.h"
 
-enum RENDER_STAGE {
-    FETCH_NT = 0,
-    FETCH_AT = 2,
-    FETCH_TILE_LSB = 4,
-    FETCH_TILE_MSB = 6,
-    INC_V = 7
+enum BG_RENDER_STAGE {
+    BG_FETCH_NT = 0,
+    BG_FETCH_AT = 2,
+    BG_FETCH_LSB = 4,
+    BG_FETCH_MSB = 6,
+    BG_INC_H = 7
+};
+
+enum FG_RENDER_STAGE {
+    FG_FETCH_Y,
+    FG_FETCH_NT,
+    FG_FETCH_AT,
+    FG_FETCH_X,
+    FG_UPDATE_SHIFTER
 };
 
 enum PPU_REGISTER {
@@ -59,6 +67,13 @@ enum VRAM_MASK {
     FINE_Y = 0b0111000000000000
 };
 
+enum SPRITE_MASK {
+    FLIP_V = 0b10000000,
+    FLIP_H = 0b01000000,
+    PRIORITY = 0b00100000,
+    PALETTE = 0b00000011
+};
+
 class PPU2C02 {
 public:
 
@@ -74,17 +89,27 @@ public:
     Byte readRegister(Word address);
     void writeRegister(const Byte& data, Word address);
 
+    void startDmaTransfer(const Byte& data);
+    void writeDma(const Byte& data);
+    Byte getOamDma(void) { return mRegisters[OAMDMA]; }
+    Byte getOamAddr(void) { return mRegisters[OAMADDR]; }
+
 private:
 
     void updateState(void);
     void draw(void);
     void updatePosition(void);
 
-    Byte fetchNametable(void);
-    Byte fetchAttribute(void);
-    Byte fetchTileData(const bool& fetchMsb);
+    Byte fetchBgNametable(void);
+    Byte fetchBgAttribute(void);
+    Byte fetchBgTileData(const bool& fetchMsb);
 
-    void updateDataRegisters(void);
+    Byte fetchFgTileData(const bool& fetchMsb);
+
+    void updateBackgroundData(void);
+    void updateSpriteData(void);
+    void updateShifters(void);
+    void evaluateOam(void);
     void preRenderRoutine(void);
     void postRenderRoutine(void);
     void incrementX(void);
@@ -99,21 +124,34 @@ private:
     PPUBus* mBus;
     Window* mWindow;
 
-    Byte mRegisters[8];     //registers available for CPU write and reads
+    Byte mRegisters[9];     //registers available for CPU write and reads
+    Byte mOam[256];         //internal object attribute memory (for sprites)
+    Byte mSecondaryOam[32]; //secondary object attribute memory
+    Byte mSpriteCount;
 
     Word mVRamAddr;         //vram adderss
     Word mTRamAddr;         //temporary vram address (address of the top left onscreen tile)
     Byte mFineX;            //fine X scroll
 
-    Byte mBgTileId;         //fetched tile index
-    Byte mBgTileAttribute;  //fetched tile attribute index
-    Byte mBgTileLsb;        //fetched tile 1st bitplane
-    Byte mBgTileMsb;        //fetched tile 2nd bitplane
+    Byte mBgTileId;         //fetched background tile index
+    Byte mBgTileAttribute;  //fetched background tile attribute index
+    Byte mBgTileLsb;        //fetched background tile 1st bitplane
+    Byte mBgTileMsb;        //fetched background tile 2nd bitplane
 
-    Word mPShiftReg1;       //1st bitplane of a tile (LSB)
-    Word mPShiftReg2;       //2nd bitplane of a tile (MSB)
-    Word mCShiftReg1;       //1st colour bitplane of a tile (LSB)
-    Word mCShiftReg2;       //2nd colour bitplane of a tile (MSB)
+    Word mBgPatternLo;      //1st bitplane of a tile (LSB)
+    Word mBgPatternHi;      //2nd bitplane of a tile (MSB)
+    Word mBgAttribLo;       //1st colour bitplane of a tile (LSB)
+    Word mBgAttribHi;       //2nd colour bitplane of a tile (MSB)
+
+    Byte mFgTileY;
+    Byte mFgTileId;
+    Byte mFgTileAttribute;
+    Byte mFgTileX;
+
+    Byte mFgPatternLo[8];
+    Byte mFgPatternHi[8];
+    Byte mFgAttrib[8];
+    Byte mSpritesXPos[8];
 
     Byte mWLatch;           //1st or 2nd write toggle
     Byte mDataBuffer;       //data fetched from PPUADDR
