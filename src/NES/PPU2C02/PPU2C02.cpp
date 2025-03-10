@@ -222,12 +222,15 @@ void PPU2C02::draw(void) {
             fgPixelCode = ((mFgPatternHi[i] >> 7) << 1) | (mFgPatternLo[i] >> 7);
             fgPaletteCode = (mFgAttrib[i] & SPRITE_MASK::PALETTE) + 0x04;
             fgPriority = (mFgAttrib[i] & SPRITE_MASK::PRIORITY) == 0;  //to test the fg against the bg
-            if (fgPixelCode != 0) { break; } //found sprite with highest priority
+            if (fgPixelCode != 0) { 
+                if (!i) { this->setSprite0Hit(); }
+                break; 
+            } //found sprite with highest priority
         }
     }
 
-    Byte pixelCode = bgPixelCode;
-    Byte paletteCode = bgPaletteCode;
+    Byte pixelCode = 0;
+    Byte paletteCode = 0;
 
     if (bgPixelCode == 0 && fgPixelCode == 0) {
         pixelCode = 0;
@@ -255,9 +258,8 @@ void PPU2C02::draw(void) {
 void PPU2C02::updatePosition(void) {
     if (++mCycle > 339) {           //341 cycles per scanline (-1 through 339)
         mCycle = -1;
-        if (++mScanline > 260) {    //262 scanlines (-1 through 260)
+        if (++mScanline > 260)      //262 scanlines (-1 through 260)
             mScanline = -1;
-        } 
     }
 }
 
@@ -420,7 +422,7 @@ void PPU2C02::evaluateOam(void) {
 
     for (int i = 0; i < 64; ++i) {
 
-        Byte diff = mScanline - mOam[i * 4]; //difference in Y coord of scanline and sprite
+        short diff = mScanline - mOam[i * 4]; //difference in Y coord of scanline and sprite
         Byte spriteSize = mRegisters[PPUCTRL] & CTRL_REGISTER::SPRTSIZ ? 16 : 8;
         if (diff < 0 || diff >= spriteSize) { continue; } //sprite not visible
 
@@ -437,6 +439,21 @@ void PPU2C02::evaluateOam(void) {
 
 }
 
+void PPU2C02::setSprite0Hit(void) {
+    if (mRegisters[PPUSTATUS]
+        & STATUS_REGISTER::SPRITE_0)
+        return; //ignore if the flag is set
+
+    if (!(mRegisters[PPUMASK] & MASK_REGISTER::RENDER_SPRITES)
+        || !(mRegisters[PPUMASK] & MASK_REGISTER::RENDER_BACKGROUND))
+        return; //both flags need to be set
+
+    if (mCycle == 254)
+        return; //this just gets ignored
+
+    mRegisters[PPUSTATUS] |= STATUS_REGISTER::SPRITE_0;
+}
+
 void PPU2C02::preRenderRoutine(void) {
     mRegisters[PPUSTATUS] &= ~STATUS_REGISTER::VBLANK;
     mRegisters[PPUSTATUS] &= ~STATUS_REGISTER::SPRITE_0;
@@ -451,8 +468,8 @@ void PPU2C02::preRenderRoutine(void) {
 
 void PPU2C02::postRenderRoutine(void) {
     mRegisters[PPUSTATUS] |= STATUS_REGISTER::VBLANK;
-    if (mRegisters[PPUCTRL] & CTRL_REGISTER::VBNMIEN) { this->mNmiCallback(); }
-
+    if (mRegisters[PPUCTRL] & CTRL_REGISTER::VBNMIEN)
+        this->mNmiCallback();
 }
 
 void PPU2C02::incrementX(void) {

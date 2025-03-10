@@ -53,9 +53,9 @@ enum MASK_REGISTER {
 };
 
 enum STATUS_REGISTER {
-    SPRITE_OVERFLOW = 1 << 5,
-    SPRITE_0 = 1 << 6,
-    VBLANK = 1 << 7
+    SPRITE_OVERFLOW = 1 << 5,   //sprite overflow flag
+    SPRITE_0 = 1 << 6,          //sprite 0 hit flag
+    VBLANK = 1 << 7             //vblank flag
 };
 
 enum VRAM_MASK {
@@ -110,6 +110,7 @@ private:
     void updateSpriteData(void);
     void updateShifters(void);
     void evaluateOam(void);
+    void setSprite0Hit(void);
     void preRenderRoutine(void);
     void postRenderRoutine(void);
     void incrementX(void);

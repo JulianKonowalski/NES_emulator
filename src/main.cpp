@@ -4,7 +4,7 @@
 #include "NES/Cartridge/Cartridge.h"
 
 //const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\PPU\\scanline.nes";
-const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\donkeyKong.nes";
+const std::string filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\superMarioBros.nes";
 
 int main(void) {
     Cartridge cartridge(filepath);
