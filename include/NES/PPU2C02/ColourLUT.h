@@ -34,7 +34,7 @@ class ColourLUT {
 
     using Byte = uint8_t;
 
-    friend class PPU2C02;
+    friend class PPU2C02;   //only PPU can create this LUT
 
     const Colour& operator[](const Byte& code) const { return mColours[code & 0x3F]; }
 

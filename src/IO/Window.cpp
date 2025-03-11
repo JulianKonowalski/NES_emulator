@@ -1,9 +1,9 @@
 #include "IO/Window.h"
 
 #include <cstdlib>
+#include <thread>
 
 #include "raylib.h"
-#include <thread>
 
 Window::Window(std::string title, int width, int height, short scale, Joypad& joypad) : mScale (scale), mJoypad(&joypad) {
     InitWindow(width * mScale, height *mScale, title.c_str());
@@ -24,8 +24,6 @@ void Window::swapBuffers(void) {
 void Window::drawPixel(const int& posX, const int& posY, const Colour& colour) {
     DrawRectangle(posX * mScale, posY * mScale, mScale, mScale, {colour.red(), colour.green(), colour.blue(), 255});
 }
-
-#include <iostream>
 
 void Window::handleInputs(void) {
 

@@ -41,10 +41,10 @@ void CPUBus::write(const Byte& data, const Word& address) {
                 mPpu->startDmaTransfer(data);
                 mCpu->startDmaTransfer();
                 mDmaWait = true;
-                return;
-            case 0x4016: mJoypad->setStrobe(data == 0x1); return;
-            case 0x4017: return; //ignore the 2nd joypad
-            default: return;
+                break;
+            case 0x4016: mJoypad->setStrobe(data == 0x1); break;
+            case 0x4017: break; //ignore the 2nd joypad
+            default: break;
         }
     } else { throw std::runtime_error("CPU tried to write into ROM memory\n"); }
 }

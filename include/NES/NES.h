@@ -1,8 +1,6 @@
 #ifndef NES_H
 #define NES_H
 
-#include <iostream>
-
 #include "NES/MOS6502/MOS6502.h"
 #include "NES/PPU2C02/PPU2C02.h"
 #include "NES/Buses/CPUBus.h"

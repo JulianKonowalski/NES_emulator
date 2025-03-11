@@ -79,6 +79,8 @@ Byte PPU2C02::readRegister(Word address) {
                 data = mDataBuffer; //no delay for palette reads
             mVRamAddr += mRegisters[PPUCTRL] & VRAMINC ? 32 : 1;
             return data;
+        default:
+            return 0;
     }
 }
 

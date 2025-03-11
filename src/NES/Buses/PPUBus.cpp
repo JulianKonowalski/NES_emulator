@@ -38,7 +38,7 @@ Byte PPUBus::read(Word address) {
                     || address >= 0xC00 && address <= 0xFFF)
                     return mNametable[1][address & 0x3FF];
                 return 0;
-            case ALTERNATIVE:
+            default:
                 return 0;
         }
     } else {
