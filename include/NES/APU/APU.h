@@ -17,15 +17,23 @@ public:
     //FOR TESTING
     void setOscFreq(const float& freq) { 
         mTriOscillator.setFrequency(freq);
-        mOscillator.setFrequency(freq); 
+        mPulseOscillator1.setFrequency(freq);
+        mPulseOscillator2.setFrequency(freq);
     }
-    float getOscFreq(void) { return mOscillator.getFrequency(); }
+
+    void setOscShift(const int& shift) {
+        mPulseOscillator1.setPhaseShift(shift);
+        mPulseOscillator2.setPhaseShift(shift);
+    }
+
+    float getOscFreq(void) { return mPulseOscillator1.getFrequency(); }
+    int getOscShift(void) { return mPulseOscillator1.getPhaseShift(); }
 
 
 private:
 
-    SinOscillator mOscillator;
-
+    PulseOscillator mPulseOscillator1;
+    PulseOscillator mPulseOscillator2;
     TriOscillator mTriOscillator;
     NoiseOscillator mNoiseOscillator;
 

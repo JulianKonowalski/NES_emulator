@@ -17,14 +17,15 @@ void audioDemo() {
     APU apu(window, 44100);
     while (!WindowShouldClose()) {
 
-        
         //handle inputs
-        if (IsKeyDown(KEY_UP)) {
+        if (IsKeyDown(KEY_UP))
             apu.setOscFreq(apu.getOscFreq() + 10);
-        }
-        if (IsKeyDown(KEY_DOWN)) {
+        if (IsKeyDown(KEY_DOWN))
             apu.setOscFreq(apu.getOscFreq() - 10);
-        }
+        if (IsKeyDown(KEY_RIGHT))
+            apu.setOscShift(apu.getOscShift() + 1);
+        if (IsKeyDown(KEY_LEFT))
+            apu.setOscShift(apu.getOscShift() - 1);
 
         window->swapBuffers();
     }

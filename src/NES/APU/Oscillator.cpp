@@ -52,7 +52,7 @@ float Oscillator::process(void) {
 /* NOISE OSCILLATOR */
 
 float NoiseOscillator::process(void) {
-    return (float)rand() / RAND_MAX;
+    return ((float)rand() / (RAND_MAX >> 1)) - 1.0f;
 }
 
 
@@ -99,45 +99,50 @@ float TriOscillator::process(void) {
 }
 
 
-//
-//
-//
-//
-//PulseOscillator::PulseOscillator(const float& frequency, const uint8_t& harmonics, const float& phaseShift, const float& angle, const unsigned int& sampleRate) : 
-//    Oscillator(frequency, angle, sampleRate),
-//    mPhaseShift(phaseShift)
-//{
-//    this->setHarmonics(harmonics);
-//}
-//
-//PulseOscillator::PulseOscillator(const unsigned int& sampleRate) :
-//    Oscillator(sampleRate),
-//    mHarmonics(10),
-//    mPhaseShift(0.5f),
-//    mVolNorm(10)
-//{}
-//
-//void PulseOscillator::setHarmonics(const uint8_t& harmonics) {
-//    mHarmonics = harmonics;
-//    mVolNorm = 0;
-//    for (int i = 0; i < mHarmonics; ++i)
-//        mVolNorm += 1.0f / i;
-//}
-//
-//void PulseOscillator::setPhaseShift(const float& phaseShift) {
-//    mPhaseShift = PI2 * phaseShift;
-//}
-//
-//float PulseOscillator::process(void) {
-//    //float baseSample = 0;
-//    //float offsetSample = 0;
-//    //for (int i = 1; i <= mHarmonics; ++i) {
-//    //	baseSample += std::sinf(i * mAngle) / i;
-//    //	offsetSample += std::cosf(i * (mAngle - mPhaseShift)) / i;
-//    //}
-//    //mAngle += mOffset;
-//    //return (baseSample - offsetSample) / mVolNorm;
-//
-//    mAngle += mOffset;
-//    return std::sinf(mAngle);
-//}
+
+
+/* PULSE WAVE */
+
+PulseOscillator::PulseOscillator(const unsigned int& sampleRate) :
+    SinOscillator::SinOscillator(sampleRate),
+    mHarmonics(10)
+{
+    mVolNorm = 0;
+    for (uint8_t i = 1; i <= mHarmonics; ++i)
+        mVolNorm += 1.0f / i;
+    this->setPhaseShift(90);
+}
+
+PulseOscillator::PulseOscillator(const float& frequency, const unsigned int& sampleRate) :
+    SinOscillator::SinOscillator(frequency, sampleRate),
+    mHarmonics(10)
+{
+    mVolNorm = 0;
+    for (uint8_t i = 1; i <= mHarmonics; ++i)
+        mVolNorm += 1.0f / i;
+    this->setPhaseShift(90);
+}
+
+void PulseOscillator::setPhaseShift(const short& phaseShift) {
+    if (phaseShift < 0 || phaseShift > 180) { return; }
+    mPhaseShiftDeg = phaseShift;
+    mPhaseShiftRad = (phaseShift) / 180.0f; //convert to radians
+}
+
+uint16_t PulseOscillator::getPhaseShift(void) {
+    return mPhaseShiftDeg;
+}
+
+float PulseOscillator::process(void) {
+    mAngle += mOffset;
+    mAngle = mAngle > 1.0f ? mAngle - 1.0f : mAngle;
+    float primarySample = 0, secondarySample = 0;
+    for (uint8_t i = 1; i <= mHarmonics; ++i) {
+        primarySample += sin2pi(mAngle * i) / i;
+        secondarySample += sin2pi((mAngle + mPhaseShiftRad) * i) / i;
+    }
+    float sample = (primarySample - secondarySample) / mVolNorm;
+    if (sample < -1) { sample = -1; }
+    else if (sample > 1) { sample = 1; }
+    return sample;
+}

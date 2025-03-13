@@ -3,19 +3,23 @@
 #include "raylib.h"
 
 APU::APU(Window* window, const unsigned int& sampleRate) :
-    mOscillator(sampleRate),
+    mPulseOscillator1(sampleRate),
+    mPulseOscillator2(sampleRate),
     mTriOscillator(sampleRate),
     mNoiseOscillator(sampleRate),
-    mAudioBufferSize(window->getAudioBufferSize()),
-    mAudioBuffer(new short[mAudioBufferSize])
+    mAudioBufferSize(window->getAudioBufferSize())
+    //mAudioBuffer(new short[mAudioBufferSize])
 {
+    mAudioBuffer = new short[mAudioBufferSize];
+
     window->setAudioStreamCallback(
         [this](void* buffer, unsigned int frames) {
             this->update(buffer, frames);
         }
     );
 
-    mOscillator.setFrequency(440.0f);
+    mPulseOscillator1.setFrequency(440.0f);
+    mPulseOscillator2.setFrequency(440.0f);
     mTriOscillator.setFrequency(440.0f);
 
     window->playAudioStream();
@@ -31,10 +35,11 @@ void APU::update(void* buffer, unsigned int frames) {
         d[i] = (short)(
             32000.0f * (
                 (
-                    //mOscillator.process() +
-                    mTriOscillator.process()
+                    mTriOscillator.process() +
+                    mPulseOscillator1.process() + 
+                    mNoiseOscillator.process()
                 )
-                /// 2
+                / 3
             )
         );
     }

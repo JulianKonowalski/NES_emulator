@@ -1,26 +1,21 @@
 #ifndef OSCILLATOR_H
 #define OSCILLATOR_H
 
+#include <cstdint>
 
 class Oscillator {
 public:
-
 	Oscillator(const unsigned int& sampleRate);
     virtual float process(void);
-
 protected:
-
 	const unsigned int mSampleRate; //just in case someone wants more than 44,1kHz
-
 };
 
 
 class NoiseOscillator : public Oscillator {
 public:
-
 	using Oscillator::Oscillator;
 	float process(void);
-
 };
 
 
@@ -51,28 +46,24 @@ public:
 };
 
 
+class PulseOscillator : public SinOscillator {
+public:
 
-//
-//
-//class  PulseOscillator : public Oscillator {
-//public:
-//	using Oscillator::Oscillator;
-//
-//	PulseOscillator(const float& frequency, const uint8_t& harmonics, const float& phaseShift, const float& angle, const unsigned int& sampleRate);
-//	PulseOscillator(const unsigned int& sampleRate);
-//
-//	void setHarmonics(const uint8_t& harmonics);
-//	void setPhaseShift(const float& phaseShift);
-//
-//	float process(void);
-//
-//private:
-//
-//	uint8_t mHarmonics;
-//	float mPhaseShift;
-//	float mVolNorm;
-//
-//};
+	PulseOscillator(const unsigned int& sampleRate);
+	PulseOscillator(const float& frequency, const unsigned int& sampleRate);
 
+	void setPhaseShift(const short& phaseShift);
+	uint16_t getPhaseShift(void);
+
+	float process(void);
+
+private:
+
+	uint8_t mHarmonics;			//number of harmonics to construct the wave
+	short mPhaseShiftDeg;		//phase shift in degrees
+	float mPhaseShiftRad;		//phase shift in radians
+	float mVolNorm;				//divisor of the final sample to normalise the volume
+
+};
 
 #endif
