@@ -39,9 +39,9 @@ PPU2C02::PPU2C02(std::function<void(void)> nmiCallback) :
     memset(mSpritesXPos, 0, 8);
 }
 
-void PPU2C02::boot(PPUBus& bus, Window& window) {
+void PPU2C02::boot(PPUBus& bus, Window* window) {
     mBus = &bus;
-    mWindow = &window;
+    mWindow = window;
 }
 
 void PPU2C02::clock(void) {

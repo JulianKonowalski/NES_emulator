@@ -1,7 +1,7 @@
 set(
     IO_SOURCES
-    "Window.cpp"
-)
+    Window.cpp
+)   
 
 add_library(
     IO

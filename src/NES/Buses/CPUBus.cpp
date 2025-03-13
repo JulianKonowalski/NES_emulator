@@ -8,9 +8,10 @@
 using Byte = CPUBus::Byte;
 using Word = CPUBus::Word;
 
-CPUBus::CPUBus(MOS6502& cpu, PPU2C02& ppu, Cartridge& cartridge, Joypad& joypad, Word& globalClock) : 
+CPUBus::CPUBus(MOS6502& cpu, PPU2C02& ppu, APU& apu, Cartridge& cartridge, Joypad& joypad, Word& globalClock) : 
     mCpu(&cpu),
     mPpu(&ppu), 
+    mApu(&apu),
     mCartridge(&cartridge), 
     mJoypad(&joypad),
     mDmaWait(false),

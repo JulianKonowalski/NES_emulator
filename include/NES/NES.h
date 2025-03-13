@@ -5,6 +5,7 @@
 #include "NES/PPU2C02/PPU2C02.h"
 #include "NES/Buses/CPUBus.h"
 #include "NES/Buses/PPUBus.h"
+#include "NES/APU/APU.h"
 #include "NES/Cartridge/Cartridge.h"
 
 #include "IO/Window.h"
@@ -17,14 +18,15 @@ public:
 	using Word = unsigned short;
 
 	NES(Cartridge& cartridge);
+	~NES(void);
 	void run(void);
 
 private:
 
-	Window mWindow;
-
 	Word mClock;
 
+	Window* mWindow;
+	APU mApu;
 	MOS6502 mCpu;
 	PPU2C02 mPpu;
 	CPUBus mCpuBus;

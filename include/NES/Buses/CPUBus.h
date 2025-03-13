@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "NES/PPU2C02/PPU2C02.h"
+#include "NES/APU/APU.h"
 #include "NES/Cartridge/Cartridge.h"
 
 #include "IO/Joypad.h"
@@ -15,7 +16,7 @@ public:
     using Byte = uint8_t;
     using Word = uint16_t;
 
-    CPUBus(MOS6502& cpu, PPU2C02& ppu, Cartridge& cartridge, Joypad& joypad, Word& globalClock);
+    CPUBus(MOS6502& cpu, PPU2C02& ppu, APU& apu, Cartridge& cartridge, Joypad& joypad, Word& globalClock);
 
     Byte read(const Word& address);
     void write(const Byte& data, const Word& address);
@@ -27,6 +28,7 @@ private:
 
     MOS6502* mCpu;
     PPU2C02* mPpu;
+    APU* mApu;
     Cartridge* mCartridge;
     Joypad* mJoypad;
 

@@ -2,10 +2,11 @@ add_subdirectory(Buses)
 add_subdirectory(MOS6502)
 add_subdirectory(Cartridge)
 add_subdirectory(PPU2C02)
+add_subdirectory(APU)
 
 set(
 	NES_SOURCES
-	${CMAKE_CURRENT_LIST_DIR}/NES.cpp
+	NES.cpp
 )
 
 add_library(
@@ -18,6 +19,7 @@ target_link_libraries(
 	PRIVATE
 	MOS6502
 	PPU2C02
+	APU
 	BUSES
 	CARTRIDGE
 )

@@ -3,17 +3,51 @@
 #include <cstdlib>
 #include <thread>
 
-#include "raylib.h"
+Window* Window::sInstance = nullptr;
 
-Window::Window(std::string title, int width, int height, short scale, Joypad& joypad) : mScale (scale), mJoypad(&joypad) {
-    InitWindow(width * mScale, height *mScale, title.c_str());
+Window::Window(Joypad& joypad, const ScreenOptions& screenOptions, const AudioOptions& audioOptions) :
+    mJoypad(&joypad),
+    mScale (screenOptions.scale),
+    mAudioBufferSize(4096)
+{
+    InitWindow(screenOptions.width * mScale, screenOptions.height * mScale, screenOptions.title.c_str());
+    //SetTargetFPS(60);
+
+    InitAudioDevice();
+    SetAudioStreamBufferSizeDefault(mAudioBufferSize);
+    mAudioStream = LoadAudioStream(audioOptions.sampleRate, 16, 1);
+
     BeginDrawing();
     ClearBackground(BLACK);
+
     std::thread inputHandler(&Window::handleInputs, this);
     inputHandler.detach();
 }
 
-Window::~Window(void) { CloseWindow(); }
+Window::~Window(void) { 
+    UnloadAudioStream(mAudioStream);
+    CloseAudioDevice();
+    CloseWindow(); 
+}
+
+Window* Window::getInstance(Joypad& joypad, const ScreenOptions& screenOptions, const AudioOptions& audioOptions) {
+    if (!sInstance)
+        sInstance = new Window(joypad, screenOptions, audioOptions);
+    return sInstance;
+}
+
+void Window::audioStreamCallback(void* buffer, unsigned int frames) {
+    sInstance->mAudioStreamCallback(buffer, frames);
+}
+
+void Window::setAudioStreamCallback(std::function<void(void*, unsigned int)> audioStreamCallback) {
+    sInstance->mAudioStreamCallback = audioStreamCallback;
+    SetAudioStreamCallback(mAudioStream, Window::audioStreamCallback);
+}
+
+void Window::playAudioStream(void) {
+    PlayAudioStream(mAudioStream);
+}
 
 void Window::swapBuffers(void) {
     EndDrawing();
@@ -22,7 +56,13 @@ void Window::swapBuffers(void) {
 }
 
 void Window::drawPixel(const int& posX, const int& posY, const Colour& colour) {
-    DrawRectangle(posX * mScale, posY * mScale, mScale, mScale, {colour.red(), colour.green(), colour.blue(), 255});
+    DrawRectangle(
+        posX * mScale, 
+        posY * mScale, 
+        mScale, 
+        mScale, 
+        {colour.red(), colour.green(), colour.blue(), 255}
+    );
 }
 
 void Window::handleInputs(void) {
@@ -52,5 +92,6 @@ void Window::handleInputs(void) {
 
         if (IsKeyDown(KEY_S)) {  mJoypad->setButtonState(Joypad::Button::BUTTON_B, true); } 
         else { mJoypad->setButtonState(Joypad::Button::BUTTON_B, false); }
+
     }
 }

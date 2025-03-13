@@ -21,5 +21,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(raylib)
 
 include_directories(include)
+include_directories(${FETCHCONTENT_BASE_DIR}/raylib-build/raylib/include)
 
 add_subdirectory(src)

@@ -82,7 +82,7 @@ public:
 
     PPU2C02(std::function<void(void)> nmiCallback);
 
-    void boot(PPUBus& bus, Window& window);
+    void boot(PPUBus& bus, Window* window);
 
     void clock(void);
 
