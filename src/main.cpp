@@ -40,11 +40,13 @@ int main(int argc, char* argv[]) {
         //std::cout << ">./NES_emulator.exe <iNES filepath>\n\n";
         //exit(0);
 
-        audioDemo();
+        filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\superMarioBros.nes";
+    } else {
+        filepath = argv[1];
     }
 
     try {
-        Cartridge cartridge(argv[1]);
+        Cartridge cartridge(filepath);
         NES nes(cartridge);
         nes.run();
     } catch (std::runtime_error& error) {

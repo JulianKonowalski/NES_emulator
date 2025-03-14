@@ -23,7 +23,7 @@ CPUBus::CPUBus(MOS6502& cpu, PPU2C02& ppu, APU& apu, Cartridge& cartridge, Joypa
 
 Byte CPUBus::read(const Word& address) {
     if (address < 0x2000) { return mRam[address & 0x7FF]; } 
-    if (address < 0x4000) { return mPpu->readRegister(address); } 
+    if (address < 0x4000) { return mPpu->readRegister(address); }
     if (address < 0x4020) {
         switch (address) {
         case 0x4016: return mJoypad->read();
@@ -36,13 +36,16 @@ Byte CPUBus::read(const Word& address) {
 void CPUBus::write(const Byte& data, const Word& address) {
     if (address < 0x2000) { mRam[address & 0x7FF] = data; } 
     else if (address < 0x4000) { mPpu->writeRegister(data, address); } 
-    else if (address < 0x4020) {
+    else if (address < 0x4014) { //APU registers
+        mApu->writeRegister(data, address);
+    }
+    else if (address == 0x4014) { //DMA
+        mPpu->startDmaTransfer(data);
+        mCpu->startDmaTransfer();
+        mDmaWait = true;
+    }
+    else if (address < 0x4018) { //joypads
         switch (address) {
-            case 0x4014:
-                mPpu->startDmaTransfer(data);
-                mCpu->startDmaTransfer();
-                mDmaWait = true;
-                break;
             case 0x4016: mJoypad->setStrobe(data == 0x1); break;
             case 0x4017: break; //ignore the 2nd joypad
             default: break;

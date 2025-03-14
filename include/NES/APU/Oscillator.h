@@ -71,7 +71,7 @@ public:
 	float process(void);
 
 	inline static const uint8_t DEFAULT_HARMONICS = 10;
-	inline static const short DEFAULT_PHASE_SHIFT = 10;
+	inline static const short DEFAULT_PHASE_SHIFT = 90;
 
 private:
 
