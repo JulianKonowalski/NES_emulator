@@ -6,9 +6,16 @@
 class Oscillator {
 public:
 	Oscillator(const unsigned int& sampleRate);
+	Oscillator(void);
     virtual float process(void);
+
+	void setSampleRate(const unsigned int& sampleRate) { mSampleRate = sampleRate; }
+	int getSampleRate(void) { return mSampleRate; }
+
+	inline static const unsigned int DEFAULT_SAMPLE_RATE = 44100;
+
 protected:
-	const unsigned int mSampleRate; //just in case someone wants more than 44,1kHz
+	unsigned int mSampleRate; //just in case someone wants more than 44,1kHz
 };
 
 
@@ -22,6 +29,7 @@ public:
 class SinOscillator : public Oscillator {
 public:
 
+	SinOscillator(void);
 	SinOscillator(const unsigned int& sampleRate);
 	SinOscillator(const float& frequency, const unsigned int& sampleRate);
 
@@ -29,6 +37,8 @@ public:
 	float getFrequency(void) { return mFrequency; }
 
 	float process(void);
+
+	inline static const float DEFAULT_FREQUENCY = 440.0f;
 
 protected:
 
@@ -49,13 +59,19 @@ public:
 class PulseOscillator : public SinOscillator {
 public:
 
+	PulseOscillator(void);
 	PulseOscillator(const unsigned int& sampleRate);
 	PulseOscillator(const float& frequency, const unsigned int& sampleRate);
 
+	void setHarmonics(const uint8_t& harmonics);
+	uint8_t getHarmonics(void) { return mHarmonics; }
 	void setPhaseShift(const short& phaseShift);
-	uint16_t getPhaseShift(void);
+	uint16_t getPhaseShift(void) { return mPhaseShiftDeg; }
 
 	float process(void);
+
+	inline static const uint8_t DEFAULT_HARMONICS = 10;
+	inline static const short DEFAULT_PHASE_SHIFT = 10;
 
 private:
 

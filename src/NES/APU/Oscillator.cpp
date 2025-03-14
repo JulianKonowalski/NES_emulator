@@ -42,6 +42,10 @@ Oscillator::Oscillator(const unsigned int& sampleRate) :
     mSampleRate(sampleRate)
 {}
 
+Oscillator::Oscillator(void) :
+    mSampleRate(Oscillator::DEFAULT_SAMPLE_RATE)
+{}
+
 float Oscillator::process(void) {
     return 0.0f;
 }
@@ -60,19 +64,28 @@ float NoiseOscillator::process(void) {
 
 /* SINE OSCILLATOR */
 
+SinOscillator::SinOscillator(void) :
+    Oscillator::Oscillator(),
+    mAngle(0)
+{
+    this->setFrequency(SinOscillator::DEFAULT_FREQUENCY);
+}
+
 SinOscillator::SinOscillator(const unsigned int& sampleRate) :
     Oscillator::Oscillator(sampleRate),
-    mFrequency(0),
-    mAngle(0),
-    mOffset(0)
-{}
+    mAngle(0)
+{
+    this->setFrequency(SinOscillator::DEFAULT_FREQUENCY);
+}
 
 SinOscillator::SinOscillator(const float& frequency, const unsigned int& sampleRate) :
     Oscillator::Oscillator(sampleRate),
-    mFrequency(0),
     mAngle(0)
 {
-    mOffset = mFrequency / mSampleRate;
+    if (frequency < 20.0f || frequency > 20000.0f)
+        this->setFrequency(SinOscillator::DEFAULT_FREQUENCY);
+    else
+        this->setFrequency(frequency);
 }
 
 void SinOscillator::setFrequency(const float& frequency) {
@@ -103,34 +116,38 @@ float TriOscillator::process(void) {
 
 /* PULSE WAVE */
 
-PulseOscillator::PulseOscillator(const unsigned int& sampleRate) :
-    SinOscillator::SinOscillator(sampleRate),
-    mHarmonics(10)
+PulseOscillator::PulseOscillator(void) :
+    SinOscillator()
 {
-    mVolNorm = 0;
-    for (uint8_t i = 1; i <= mHarmonics; ++i)
-        mVolNorm += 1.0f / i;
-    this->setPhaseShift(90);
+    this->setHarmonics(PulseOscillator::DEFAULT_HARMONICS);
+    this->setPhaseShift(PulseOscillator::DEFAULT_PHASE_SHIFT);
+}
+
+PulseOscillator::PulseOscillator(const unsigned int& sampleRate) :
+    SinOscillator::SinOscillator(sampleRate)
+{
+    this->setHarmonics(PulseOscillator::DEFAULT_HARMONICS);
+    this->setPhaseShift(PulseOscillator::DEFAULT_PHASE_SHIFT);
 }
 
 PulseOscillator::PulseOscillator(const float& frequency, const unsigned int& sampleRate) :
-    SinOscillator::SinOscillator(frequency, sampleRate),
-    mHarmonics(10)
+    SinOscillator::SinOscillator(frequency, sampleRate)
 {
+    this->setHarmonics(PulseOscillator::DEFAULT_HARMONICS);
+    this->setPhaseShift(PulseOscillator::DEFAULT_PHASE_SHIFT);
+}
+
+void PulseOscillator::setHarmonics(const uint8_t& harmonics) {
+    mHarmonics = harmonics;
     mVolNorm = 0;
     for (uint8_t i = 1; i <= mHarmonics; ++i)
-        mVolNorm += 1.0f / i;
-    this->setPhaseShift(90);
+        mVolNorm = 1.0f / i;
 }
 
 void PulseOscillator::setPhaseShift(const short& phaseShift) {
     if (phaseShift < 0 || phaseShift > 180) { return; }
     mPhaseShiftDeg = phaseShift;
     mPhaseShiftRad = (phaseShift) / 180.0f; //convert to radians
-}
-
-uint16_t PulseOscillator::getPhaseShift(void) {
-    return mPhaseShiftDeg;
 }
 
 float PulseOscillator::process(void) {

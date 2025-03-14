@@ -21,7 +21,7 @@ void audioDemo() {
         if (IsKeyDown(KEY_UP))
             apu.setOscFreq(apu.getOscFreq() + 10);
         if (IsKeyDown(KEY_DOWN))
-            apu.setOscFreq(apu.getOscFreq() - 10);
+            apu.setOscFreq(apu.getOscFreq() - 100);
         if (IsKeyDown(KEY_RIGHT))
             apu.setOscShift(apu.getOscShift() + 1);
         if (IsKeyDown(KEY_LEFT))
