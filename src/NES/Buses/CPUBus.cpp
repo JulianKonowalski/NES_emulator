@@ -36,18 +36,18 @@ Byte CPUBus::read(const Word& address) {
 void CPUBus::write(const Byte& data, const Word& address) {
     if (address < 0x2000) { mRam[address & 0x7FF] = data; } 
     else if (address < 0x4000) { mPpu->writeRegister(data, address); } 
-    else if (address < 0x4014) { //APU registers
-        mApu->writeRegister(data, address);
-    }
-    else if (address == 0x4014) { //DMA
+    else if (address < 0x4014) { mApu->writeRegister(data, address); }
+    else if (address == 0x4014) { //OAM DMA
         mPpu->startDmaTransfer(data);
         mCpu->startDmaTransfer();
         mDmaWait = true;
     }
-    else if (address < 0x4018) { //joypads
+    else if (address < 0x4018) { //joypads and APU mode
         switch (address) {
             case 0x4016: mJoypad->setStrobe(data == 0x1); break;
-            case 0x4017: break; //ignore the 2nd joypad
+            case 0x4017: //a bit of a weird one, both APU and second joypad are addressed by this
+                //mJoypad2->setStrobe(data == 0x1);
+                mApu->writeRegister(data, address); break;
             default: break;
         }
     } else { throw std::runtime_error("CPU tried to write into ROM memory\n"); }
@@ -66,6 +66,6 @@ void CPUBus::dmaTransfer(void) {
         return;
     } else { mPpu->writeDma(mDmaData); }    //write data on odd cycles
 
-    if (mPpu->getOamAddr() == 0x00) //if the address loops back to 0, end the transfer
+    if (mPpu->getOamAddr() == 0x00)         //if the address loops back to 0, end the transfer
         mCpu->stopDmaTransfer();
 }

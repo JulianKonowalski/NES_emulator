@@ -22,6 +22,7 @@ void NES::run(void) {
 	while (true) {  
 		mPpu.clock();
 		if (mClock % 3 == 0) { mCpu.clock(); }
+		if (mClock % 6 == 0) { mApu.clock(); }
 		++mClock;
 	}
 }

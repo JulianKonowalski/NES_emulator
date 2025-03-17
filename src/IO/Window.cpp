@@ -11,7 +11,7 @@ Window::Window(Joypad& joypad, const ScreenOptions& screenOptions, const AudioOp
     mAudioBufferSize(4096)
 {
     InitWindow(screenOptions.width * mScale, screenOptions.height * mScale, screenOptions.title.c_str());
-    //SetTargetFPS(60);
+    SetTargetFPS(60);
 
     InitAudioDevice();
     SetAudioStreamBufferSizeDefault(mAudioBufferSize);

@@ -1,21 +1,28 @@
 #ifndef OSCILLATOR_H
 #define OSCILLATOR_H
 
-#include <cstdint>
-
 class Oscillator {
 public:
+
 	Oscillator(const unsigned int& sampleRate);
 	Oscillator(void);
-    virtual float process(void);
+
+	void setAmplitude(const float& amplitude);
+	float getAmplitude(void) { return mAmplitude; }
 
 	void setSampleRate(const unsigned int& sampleRate) { mSampleRate = sampleRate; }
 	int getSampleRate(void) { return mSampleRate; }
 
-	inline static const unsigned int DEFAULT_SAMPLE_RATE = 44100;
+    float process(void);
+
+	inline static constexpr float DEFAULT_AMPLITUDE = 1.0f;
+	inline static constexpr unsigned int DEFAULT_SAMPLE_RATE = 44100;
 
 protected:
-	unsigned int mSampleRate; //just in case someone wants more than 44,1kHz
+
+	float mAmplitude;			//volume of the oscillator, 0.0 - 1.0
+	unsigned int mSampleRate;	//just in case someone wants more than 44,1kHz
+
 };
 
 
@@ -26,19 +33,17 @@ public:
 };
 
 
-class SinOscillator : public Oscillator {
+class PitchedOscillator : public Oscillator {
 public:
 
-	SinOscillator(void);
-	SinOscillator(const unsigned int& sampleRate);
-	SinOscillator(const float& frequency, const unsigned int& sampleRate);
+	PitchedOscillator(void);
+	PitchedOscillator(const unsigned int& sampleRate);
+	PitchedOscillator(const float& frequency, const unsigned int& sampleRate);
 
 	void setFrequency(const float& frequency);
 	float getFrequency(void) { return mFrequency; }
 
-	float process(void);
-
-	inline static const float DEFAULT_FREQUENCY = 440.0f;
+	inline static constexpr float DEFAULT_FREQUENCY = 440.0f;
 
 protected:
 
@@ -49,36 +54,37 @@ protected:
 };
 
 
-class TriOscillator : public SinOscillator {
+class SinOscillator : public PitchedOscillator {
 public:
-	using SinOscillator::SinOscillator;
+	using PitchedOscillator::PitchedOscillator;
 	float process(void);
 };
 
 
-class PulseOscillator : public SinOscillator {
+class TriOscillator : public PitchedOscillator {
+public:
+	using PitchedOscillator::PitchedOscillator;
+	float process(void);
+};
+
+
+class PulseOscillator : public PitchedOscillator {
 public:
 
 	PulseOscillator(void);
 	PulseOscillator(const unsigned int& sampleRate);
 	PulseOscillator(const float& frequency, const unsigned int& sampleRate);
 
-	void setHarmonics(const uint8_t& harmonics);
-	uint8_t getHarmonics(void) { return mHarmonics; }
-	void setPhaseShift(const short& phaseShift);
-	uint16_t getPhaseShift(void) { return mPhaseShiftDeg; }
+	void setDutyCycle(const float& dutyCycle);
+	float getDutyCycle(void) { return mDutyCycle; }
 
 	float process(void);
 
-	inline static const uint8_t DEFAULT_HARMONICS = 10;
-	inline static const short DEFAULT_PHASE_SHIFT = 90;
+	inline static constexpr float DEFAULT_DUTY_CYCLE = 0.5f;
+	
+protected:
 
-private:
-
-	uint8_t mHarmonics;			//number of harmonics to construct the wave
-	short mPhaseShiftDeg;		//phase shift in degrees
-	float mPhaseShiftRad;		//phase shift in radians
-	float mVolNorm;				//divisor of the final sample to normalise the volume
+	float mDutyCycle;	//ratio between low and high signal
 
 };
 

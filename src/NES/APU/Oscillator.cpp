@@ -39,12 +39,19 @@ float sin2pi(float x) {
 /* BASE OSCILLATOR */
 
 Oscillator::Oscillator(const unsigned int& sampleRate) :
+    mAmplitude(Oscillator::DEFAULT_AMPLITUDE),
     mSampleRate(sampleRate)
 {}
 
 Oscillator::Oscillator(void) :
+    mAmplitude(Oscillator::DEFAULT_AMPLITUDE),
     mSampleRate(Oscillator::DEFAULT_SAMPLE_RATE)
 {}
+
+void Oscillator::setAmplitude(const float& amplitude) {
+    if (amplitude < 0.0f || amplitude > 1.0f) { return; }
+    mAmplitude = amplitude;
+} 
 
 float Oscillator::process(void) {
     return 0.0f;
@@ -56,7 +63,42 @@ float Oscillator::process(void) {
 /* NOISE OSCILLATOR */
 
 float NoiseOscillator::process(void) {
-    return ((float)rand() / (RAND_MAX >> 1)) - 1.0f;
+    return mAmplitude * (((float)rand() / (RAND_MAX >> 1)) - 1.0f);
+}
+
+
+
+
+/* PITCHED OSCILLATOR */
+
+PitchedOscillator::PitchedOscillator(void) :
+    Oscillator::Oscillator(),
+    mAngle(0)
+{
+    this->setFrequency(PitchedOscillator::DEFAULT_FREQUENCY);
+}
+
+PitchedOscillator::PitchedOscillator(const unsigned int& sampleRate) :
+    Oscillator::Oscillator(sampleRate),
+    mAngle(0)
+{
+    this->setFrequency(PitchedOscillator::DEFAULT_FREQUENCY);
+}
+
+PitchedOscillator::PitchedOscillator(const float& frequency, const unsigned int& sampleRate) :
+    Oscillator::Oscillator(sampleRate),
+    mAngle(0)
+{
+    if (frequency < 20.0f || frequency > 20000.0f)
+        this->setFrequency(PitchedOscillator::DEFAULT_FREQUENCY);
+    else
+        this->setFrequency(frequency);
+}
+
+void PitchedOscillator::setFrequency(const float& frequency) {
+    if (frequency < 20.0f || frequency > 20000.0f) { return; }
+    mFrequency = frequency;
+    mOffset = mFrequency / mSampleRate;
 }
 
 
@@ -64,40 +106,10 @@ float NoiseOscillator::process(void) {
 
 /* SINE OSCILLATOR */
 
-SinOscillator::SinOscillator(void) :
-    Oscillator::Oscillator(),
-    mAngle(0)
-{
-    this->setFrequency(SinOscillator::DEFAULT_FREQUENCY);
-}
-
-SinOscillator::SinOscillator(const unsigned int& sampleRate) :
-    Oscillator::Oscillator(sampleRate),
-    mAngle(0)
-{
-    this->setFrequency(SinOscillator::DEFAULT_FREQUENCY);
-}
-
-SinOscillator::SinOscillator(const float& frequency, const unsigned int& sampleRate) :
-    Oscillator::Oscillator(sampleRate),
-    mAngle(0)
-{
-    if (frequency < 20.0f || frequency > 20000.0f)
-        this->setFrequency(SinOscillator::DEFAULT_FREQUENCY);
-    else
-        this->setFrequency(frequency);
-}
-
-void SinOscillator::setFrequency(const float& frequency) {
-    if (frequency < 20.0f || frequency > 20000.0f) { return; }
-    mFrequency = frequency;
-    mOffset = mFrequency / mSampleRate;
-}
-
 float SinOscillator::process(void) {
     mAngle += mOffset;
-    mAngle = mAngle > 1.0f ? mAngle - 1.0f : mAngle;
-    return sin2pi(mAngle);
+    mAngle -= mAngle > 1.0f ? 1.0f : 0;
+    return mAmplitude * sin2pi(mAngle);
 }
 
 
@@ -107,8 +119,8 @@ float SinOscillator::process(void) {
 
 float TriOscillator::process(void) {
     mAngle += mOffset;
-    mAngle = mAngle > 2.0f ? mAngle - 2.0f : mAngle;
-    return mAngle - 1.0f;
+    mAngle -= mAngle > 2.0f ? 2.0f : 0;
+    return mAmplitude * (mAngle - 1.0f);
 }
 
 
@@ -117,49 +129,30 @@ float TriOscillator::process(void) {
 /* PULSE WAVE */
 
 PulseOscillator::PulseOscillator(void) :
-    SinOscillator()
+    PitchedOscillator::PitchedOscillator()
 {
-    this->setHarmonics(PulseOscillator::DEFAULT_HARMONICS);
-    this->setPhaseShift(PulseOscillator::DEFAULT_PHASE_SHIFT);
+    this->setDutyCycle(PulseOscillator::DEFAULT_DUTY_CYCLE);
 }
 
 PulseOscillator::PulseOscillator(const unsigned int& sampleRate) :
-    SinOscillator::SinOscillator(sampleRate)
+    PitchedOscillator::PitchedOscillator(sampleRate)
 {
-    this->setHarmonics(PulseOscillator::DEFAULT_HARMONICS);
-    this->setPhaseShift(PulseOscillator::DEFAULT_PHASE_SHIFT);
+    this->setDutyCycle(PulseOscillator::DEFAULT_DUTY_CYCLE);
 }
 
 PulseOscillator::PulseOscillator(const float& frequency, const unsigned int& sampleRate) :
-    SinOscillator::SinOscillator(frequency, sampleRate)
+    PitchedOscillator::PitchedOscillator(frequency, sampleRate)
 {
-    this->setHarmonics(PulseOscillator::DEFAULT_HARMONICS);
-    this->setPhaseShift(PulseOscillator::DEFAULT_PHASE_SHIFT);
+    this->setDutyCycle(PulseOscillator::DEFAULT_DUTY_CYCLE);
 }
 
-void PulseOscillator::setHarmonics(const uint8_t& harmonics) {
-    mHarmonics = harmonics;
-    mVolNorm = 0;
-    for (uint8_t i = 1; i <= mHarmonics; ++i)
-        mVolNorm = 1.0f / i;
-}
-
-void PulseOscillator::setPhaseShift(const short& phaseShift) {
-    if (phaseShift < 0 || phaseShift > 180) { return; }
-    mPhaseShiftDeg = phaseShift;
-    mPhaseShiftRad = (phaseShift) / 180.0f; //convert to radians
+void PulseOscillator::setDutyCycle(const float& dutyCycle) {
+    if (dutyCycle < 0.0f || dutyCycle > 1.0f) { return; }
+    mDutyCycle = dutyCycle;
 }
 
 float PulseOscillator::process(void) {
     mAngle += mOffset;
-    mAngle = mAngle > 1.0f ? mAngle - 1.0f : mAngle;
-    float primarySample = 0, secondarySample = 0;
-    for (uint8_t i = 1; i <= mHarmonics; ++i) {
-        primarySample += sin2pi(mAngle * i) / i;
-        secondarySample += sin2pi((mAngle + mPhaseShiftRad) * i) / i;
-    }
-    float sample = (primarySample - secondarySample) / mVolNorm;
-    if (sample < -1) { sample = -1; }
-    else if (sample > 1) { sample = 1; }
-    return sample;
+    mAngle -= mAngle > 1.0f ? 1.0f : 0;
+    return mAngle < mDutyCycle ? mAmplitude * -1.0f : mAmplitude;
 }

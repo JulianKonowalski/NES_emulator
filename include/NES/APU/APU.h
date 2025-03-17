@@ -1,11 +1,28 @@
 #ifndef APU_H
 #define APU_H
 
-#include "IO/Window.h"
-
 #include <cstdint>
 
 #include "NES/APU/Oscillator.h"
+#include "NES/APU/OscLUT.h"
+#include "IO/Window.h"
+
+static constexpr float CPU_CLOCK_SPEED = 1789773.0f;
+static constexpr float MAX_AMPLITUDE = 15.0f;
+
+enum VOL_MASK {
+    DUTY =      0b11000000,
+    LOOPING =   0b00100000,
+    CONSTVOL =  0b00010000,
+    VOLUME =    0b00001111
+};
+
+enum SWEEP_MASK {
+    ENABLE =    0b10000000,
+    PERIOD =    0b01110000,
+    DIRECTION = 0b00001000,
+    SHIFT =     0b00000111
+};
 
 enum APU_REGISTER {
     SQ1_VOL =       0x4000,
@@ -25,8 +42,78 @@ enum APU_REGISTER {
     DMC_FREQ =      0x4010,
     DMC_RAW =       0x4011,
     DMC_START =     0x4012,
-    DMC_LEN =       0x4013
+    DMC_LEN =       0x4013,
+    MODE =          0x4017
 };
+
+
+/* APU OSCILLATORS */
+
+/*
+* This class may be a bit confusing
+* but basically it's an overlay
+* that I use on top of my oscillators
+* to accomodate their functionality
+* to how NES passes and stores info
+* about notes to play
+*/
+
+class APUPulse : public PulseOscillator {
+public:
+
+    using Byte = uint8_t;
+    using Word = uint16_t;
+
+    APUPulse(void);
+    APUPulse(const unsigned int& sampleRate);
+
+    void setEnabled(const bool& enabled) { mIsEnabled = enabled; }
+    void setVolumeSettings(const Byte& settings);
+
+    void setNoteLength(const Byte& length);
+    void setSweepSettings(const Byte& settings);
+    void setFrequency(const Byte& frequency, const bool& highByteWrite);
+
+    void updateEnvelope(void);
+    void updateLength(void);
+    void updateSweep(void);
+
+    bool isEnabled(void) { return mIsEnabled; }
+    bool isLooping(void) { return mIsLooping; }
+    bool isSweeping(void) { return mIsSweeping; }
+    bool hasConstantVolume(void) { return mHasConstantVolume; }
+
+    Byte getNoteLength(void) { return mNoteLength; }
+    Word getInitialFreqency(void) { return mInitialFreqency; }
+    Byte getInitialAmplitude(void) { return mInitialAmplitude; }
+
+    float process(void);
+
+private:
+
+    bool mIsEnabled;
+    bool mIsLooping;
+    bool mIsSweeping;
+    bool mSweepDown;
+    bool mHasConstantVolume;
+
+    //all are stored in NES notation
+    Word mInitialFreqency;
+
+    Byte mDivider;
+    Byte mNoteLength;
+    Byte mSweepPeriod;
+    Byte mSweepShift;
+    Byte mSweepClock;
+    Byte mInitialAmplitude;
+    Byte mCurrentAmplitude;
+
+};
+
+
+
+
+/* APU */
 
 class APU {
 public:
@@ -37,37 +124,34 @@ public:
     APU(Window* window, const unsigned int& sampleRate);
     ~APU(void);
 
+    void clock(void);
+
     Byte readRegister(const Word& address);
     void writeRegister(const Byte& data, const Word& address);
     void update(void* buffer, unsigned int frames);
 
 
-    //FOR TESTING
-    void setOscFreq(const float& freq) { 
-        mTriOscillator.setFrequency(freq);
-        mPulseOscillator[0].setFrequency(freq);
-        mPulseOscillator[1].setFrequency(freq);
-    }
-
-    void setOscShift(const int& shift) {
-        mPulseOscillator[0].setPhaseShift(shift);
-        mPulseOscillator[1].setPhaseShift(shift);
-    }
-
-    float getOscFreq(void) { return mPulseOscillator[0].getFrequency(); }
-    int getOscShift(void) { return mPulseOscillator[0].getPhaseShift(); }
-
-
 private:
 
-    PulseOscillator mPulseOscillator[2];
+    void writePulseVolume(const Byte& data, const Byte& oscIdx);
+    void writePulseSweep(const Byte& data, const Byte& oscIdx);
+    void writePulseLo(const Byte& data, const Byte& oscIdx);
+    void writePulseHi(const Byte& data, const Byte& oscIdx);
+
+    float getSample(void);
+
+    OscLUT mOscLUT;
+
+    APUPulse mPulseOscillator[2];
     TriOscillator mTriOscillator;
     NoiseOscillator mNoiseOscillator;
 
-    Word mPulseFrequency[2];
+    Byte mMode;
+
+    unsigned short mCycles;
 
     short* mAudioBuffer;
-    short mAudioBufferSize;
+    unsigned short mAudioBufferSize;
 
 };
 
