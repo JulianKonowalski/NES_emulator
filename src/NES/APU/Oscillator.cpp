@@ -1,158 +1,244 @@
 #include "NES/APU/Oscillator.h"
 
-#include <cstdlib>
+/******************/
+/* APU OSCILLATOR */
+/******************/
 
-#define PI	3.1415926535f
-#define PI2 6.2831853071f
+APUOscillator::APUOscillator(void) :
+    mIsEnabled(false),
+    mIsLooping(false),
+    mHasConstantVolume(false),
+    mDivider(0),
+    mNoteLength(0),
+    mInitialAmplitude(DEFAULT_AMPLITUDE),
+    mCurrentAmplitude(DEFAULT_AMPLITUDE),
+    mFrequency(DEFAULT_FREQUENCY),
+    mRealAmplitude(0.0f),
+    mSampleRate(DEFAULT_SAMPLE_RATE)
+{}
 
-/**
-* shoutout to my friend, ezic04,
-* who helped me out with this 
-* fast implementation of sin.
-* Well tbh he just wrote it 
-* for me.
-*/
-
-static constexpr float T1 = 0.0778267541633225f;
-
-float sin2pi(float x) {
-  float arg = x - (long)x;
-  bool sign = arg >= 0.5f;
-  arg = arg >= 0.5f ? 1.f - arg : arg;
-  //////////////// this part
-  arg = arg > 0.25f ? 0.5f - arg : arg;
-
-  if (arg <= T1) {
-    float temp = PI2 * arg;
-    float val = temp * (1 - temp * temp / 6);
-    return sign ? -val : val;
-  }
-  ////////////// couild be commented
-  float temp = 8.f * arg * (1.f - 2.f * arg);
-  float val = 4.f * temp / (5.f - temp);
-  return sign ? -val : val;
+void APUOscillator::setEnabled(const bool& enabled) {
+    mIsEnabled = enabled;
 }
 
+void APUOscillator::setLooping(const bool& isLooping) {
+    mIsLooping = isLooping;
+}
 
+void APUOscillator::setConstantVolume(const bool& hasConstantVolume) {
+    mHasConstantVolume = hasConstantVolume;
+}
 
+void APUOscillator::setNoteLength(const Byte& length) {
+    mNoteLength = length;
+}
 
-/* BASE OSCILLATOR */
+void APUOscillator::setAmplitude(const Byte& amplitude) {
+    mInitialAmplitude   = amplitude;
+    mCurrentAmplitude   = amplitude;
+    mDivider            = amplitude;
+    mRealAmplitude      = amplitude / MAX_AMPLITUDE;
+}
 
-Oscillator::Oscillator(const unsigned int& sampleRate) :
-    mAmplitude(Oscillator::DEFAULT_AMPLITUDE),
-    mSampleRate(sampleRate)
-{}
+void APUOscillator::setFrequency(const Byte& frequency, const bool& highByteWrite) {
+    mFrequency = highByteWrite ? 
+        (mFrequency & 0x00FF) | ((frequency & 0x7) << 8)
+        : (mFrequency & 0xFF00) | frequency;
+}
 
-Oscillator::Oscillator(void) :
-    mAmplitude(Oscillator::DEFAULT_AMPLITUDE),
-    mSampleRate(Oscillator::DEFAULT_SAMPLE_RATE)
-{}
+void APUOscillator::setSampleRate(const unsigned int& sampleRate) {
+    if (sampleRate == 0) { return; }
+    mSampleRate = sampleRate;
+}
 
-void Oscillator::setAmplitude(const float& amplitude) {
-    if (amplitude < 0.0f || amplitude > 1.0f) { return; }
-    mAmplitude = amplitude;
-} 
+void APUOscillator::updateLength(void) {
+    if (!mNoteLength) { return; }
+    if (mIsLooping) { return; }
+    if (!mIsEnabled || --mNoteLength == 0)
+        this->setAmplitude(0);
+}
 
-float Oscillator::process(void) {
+void APUOscillator::updateVolume(void) {
+    if (mHasConstantVolume) { return; }
+    if (--mDivider == 0) {
+        mDivider = mInitialAmplitude;
+        if (--mCurrentAmplitude == 0)
+            mCurrentAmplitude = (mNoteLength != 0) ? mInitialAmplitude : 0;
+        mRealAmplitude = mCurrentAmplitude / MAX_AMPLITUDE;
+    }
+}
+
+float APUOscillator::process(void) {
     return 0.0f;
 }
 
 
+/*************/
+/* APU NOISE */
+/*************/
 
 
-/* NOISE OSCILLATOR */
-
-float NoiseOscillator::process(void) {
-    return mAmplitude * (((float)rand() / (RAND_MAX >> 1)) - 1.0f);
-}
-
-
-
-
-/* PITCHED OSCILLATOR */
-
-PitchedOscillator::PitchedOscillator(void) :
-    Oscillator::Oscillator(),
-    mAngle(0)
+APUNoise::APUNoise(void) :
+    APUOscillator::APUOscillator(),
+    mMode(false),
+    mLFSR(1),
+    mAngle(0.0f)
 {
-    this->setFrequency(PitchedOscillator::DEFAULT_FREQUENCY);
+    mOffset = CPU_CLOCK_SPEED / mSampleRate;
 }
 
-PitchedOscillator::PitchedOscillator(const unsigned int& sampleRate) :
-    Oscillator::Oscillator(sampleRate),
-    mAngle(0)
-{
-    this->setFrequency(PitchedOscillator::DEFAULT_FREQUENCY);
+void APUNoise::setSampleRate(const unsigned int& sampleRate) {
+    APUOscillator::setSampleRate(sampleRate);
+    mOffset = CPU_CLOCK_SPEED / mSampleRate;
 }
 
-PitchedOscillator::PitchedOscillator(const float& frequency, const unsigned int& sampleRate) :
-    Oscillator::Oscillator(sampleRate),
-    mAngle(0)
-{
-    if (frequency < 20.0f || frequency > 20000.0f)
-        this->setFrequency(PitchedOscillator::DEFAULT_FREQUENCY);
-    else
-        this->setFrequency(frequency);
-}
-
-void PitchedOscillator::setFrequency(const float& frequency) {
-    if (frequency < 20.0f || frequency > 20000.0f) { return; }
-    mFrequency = frequency;
-    mOffset = mFrequency / mSampleRate;
-}
-
-
-
-
-/* SINE OSCILLATOR */
-
-float SinOscillator::process(void) {
+void APUNoise::updateRegister(void) {
     mAngle += mOffset;
-    mAngle -= mAngle > 1.0f ? 1.0f : 0;
-    return mAmplitude * sin2pi(mAngle);
+    if (mAngle < mFrequency) { return; }
+    mAngle = 0.0f;
+    Byte MSB = 0;
+    Byte LSB = mLFSR & 0x1;
+    mLFSR >>= 1;
+    if (mMode) { MSB = LSB ^ (mLFSR & (1 << 4)); } 
+    else { MSB = LSB ^ (mLFSR & 0x1); }
+    mLFSR = mLFSR | (MSB << 14);
+}
+
+float APUNoise::process(void) {
+    if (!mIsEnabled) { return 0.0f; }
+    this->updateRegister();
+    return mRealAmplitude * (mLFSR & 0x1);
 }
 
 
+/****************/
+/* APU TIRANGLE */
+/****************/
 
 
-/* TRIANGLE OSCILLATOR */
+APUTri::APUTri(void) :
+    APUOscillator::APUOscillator(),
+    mReloadFlag(false),
+    mLinearReload(0),
+    mLinearCounter(0),
+    mAngle(0.0f)
+{
+    mRealFrequency = (CPU_CLOCK_SPEED / 2) / ((mFrequency + 1) << 4);
+    mOffset = mRealFrequency * NUM_OUTPUT_VALUES / mSampleRate;
+}
 
-float TriOscillator::process(void) {
+void APUTri::setLinearCounter(const Byte& counterValue) {
+    mLinearCounter  = counterValue;
+    mLinearReload   = counterValue;
+}
+
+void APUTri::updateLength(void) {
+    if (!mNoteLength) { return; }
+    if (!mIsEnabled || mIsLooping) { return; }
+    if (--mNoteLength != 0) {
+        if(mLinearCounter)
+            this->setAmplitude((Byte)MAX_AMPLITUDE);
+        return;
+    }
+    this->setAmplitude(0);
+}
+
+void APUTri::updateLinearCounter(void) {
+    if (!mLinearCounter) { return; }
+    if (--mLinearCounter != 0) {
+        if(mNoteLength || mIsLooping)
+            this->setAmplitude((Byte)MAX_AMPLITUDE);
+        return; 
+    }
+    if (mReloadFlag) 
+        mLinearCounter = mLinearReload;
+    if (!mIsLooping) 
+        mReloadFlag = false;
+    if (!mLinearCounter)
+        this->setAmplitude(0);
+}
+
+void APUTri::setFrequency(const Byte& frequency, const bool& highByteWrite) {
+    APUOscillator::setFrequency(frequency, highByteWrite);
+    mRealFrequency = (CPU_CLOCK_SPEED / 2) / ((mFrequency + 1) << 4);
+    mOffset = mRealFrequency * NUM_OUTPUT_VALUES / mSampleRate;
+}
+
+void APUTri::setSampleRate(const unsigned int& sampleRate) {
+    APUOscillator::setSampleRate(sampleRate);
+    mOffset = mRealFrequency * NUM_OUTPUT_VALUES / mSampleRate;
+}
+
+float APUTri::process(void) {
+    if (!mIsEnabled) { return 0.0f; }
     mAngle += mOffset;
-    mAngle -= mAngle > 2.0f ? 2.0f : 0;
-    return mAmplitude * (mAngle - 1.0f);
+    mAngle -= mAngle >= 32.0f ? 32.0f : 0.0f;
+    Byte idx = mAngle;
+    return mRealAmplitude * OUTPUT_VALUES[idx & 0x1F] / MAX_OUTPUT_VALUE;
 }
 
 
+/*************/
+/* APU PULSE */
+/*************/
 
 
-/* PULSE WAVE */
-
-PulseOscillator::PulseOscillator(void) :
-    PitchedOscillator::PitchedOscillator()
+APUPulse::APUPulse(void) :
+    APUOscillator::APUOscillator(),
+    mIsSweeping(false),
+    mSweepDown(false),
+    mSweepPeriod(0),
+    mSweepShift(0),
+    mSweepClock(0),
+    mDutyCycle(DEFAULT_DUTY_CYCLE),
+    mAngle(0.0f)
 {
-    this->setDutyCycle(PulseOscillator::DEFAULT_DUTY_CYCLE);
+    mRealFrequency = CPU_CLOCK_SPEED / ((mFrequency + 1) << 4);
+    mOffset = mRealFrequency / mSampleRate;
 }
 
-PulseOscillator::PulseOscillator(const unsigned int& sampleRate) :
-    PitchedOscillator::PitchedOscillator(sampleRate)
-{
-    this->setDutyCycle(PulseOscillator::DEFAULT_DUTY_CYCLE);
-}
-
-PulseOscillator::PulseOscillator(const float& frequency, const unsigned int& sampleRate) :
-    PitchedOscillator::PitchedOscillator(frequency, sampleRate)
-{
-    this->setDutyCycle(PulseOscillator::DEFAULT_DUTY_CYCLE);
-}
-
-void PulseOscillator::setDutyCycle(const float& dutyCycle) {
+void APUPulse::setDutyCycle(const float& dutyCycle) {
     if (dutyCycle < 0.0f || dutyCycle > 1.0f) { return; }
     mDutyCycle = dutyCycle;
 }
 
-float PulseOscillator::process(void) {
+void APUPulse::setFrequency(const Byte& frequency, const bool& highByteWrite) {
+    APUOscillator::setFrequency(frequency, highByteWrite);
+    mRealFrequency = CPU_CLOCK_SPEED / ((mFrequency + 1) << 4);
+    mOffset = mRealFrequency / mSampleRate;
+}
+
+void APUPulse::setSampleRate(const unsigned int& sampleRate) {
+    APUOscillator::setSampleRate(sampleRate);
+    mOffset = mRealFrequency / mSampleRate;
+}
+
+void APUPulse::setSweepPeriod(const Byte& period) {
+    mSweepPeriod    = period;
+    mSweepClock     = period;
+}
+
+void APUPulse::updateSweep(void) {
+    //the sweep unit mutes the oscillator, even when it's not enabled
+    if (mFrequency < 8 || mFrequency > 0x7FF) {
+        this->setAmplitude(0);
+        mIsEnabled = false;
+    }
+
+    if (!mIsEnabled || !mIsSweeping || mSweepClock == 0) { return; }
+    else if (--mSweepClock) { return; }
+
+    mSweepClock = mNoteLength != 0 ? mSweepPeriod : 0;
+
+    Byte freqChange = mFrequency >> mSweepShift;
+    mFrequency = mSweepDown ? mFrequency - freqChange : mFrequency + freqChange;
+    mRealFrequency = CPU_CLOCK_SPEED / ((mFrequency + 1) << 4);
+    mOffset = mRealFrequency / mSampleRate;
+}
+
+float APUPulse::process(void) {
+    if (!mIsEnabled) { return 0.0f; }
     mAngle += mOffset;
-    mAngle -= mAngle > 1.0f ? 1.0f : 0;
-    return mAngle < mDutyCycle ? mAmplitude * -1.0f : mAmplitude;
+    mAngle -= mAngle > 1.0f ? 1.0f : 0.0f;
+    return mAngle < mDutyCycle ? mRealAmplitude * -1.0f : mRealAmplitude;
 }

@@ -66,7 +66,6 @@ void Window::drawPixel(const int& posX, const int& posY, const Colour& colour) {
 }
 
 void Window::handleInputs(void) {
-
     while (!WindowShouldClose()) {
 
         if (IsKeyDown(KEY_UP)) {  mJoypad->setButtonState(Joypad::Button::BUTTON_UP, true); } 

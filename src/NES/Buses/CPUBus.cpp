@@ -42,12 +42,11 @@ void CPUBus::write(const Byte& data, const Word& address) {
         mCpu->startDmaTransfer();
         mDmaWait = true;
     }
-    else if (address < 0x4018) { //joypads and APU mode
+    else if (address < 0x4018) { //joypads and APU
         switch (address) {
+            case 0x4015: mApu->writeRegister(data, address); break;
             case 0x4016: mJoypad->setStrobe(data == 0x1); break;
-            case 0x4017: //a bit of a weird one, both APU and second joypad are addressed by this
-                //mJoypad2->setStrobe(data == 0x1);
-                mApu->writeRegister(data, address); break;
+            case 0x4017: mApu->writeRegister(data, address); break;
             default: break;
         }
     } else { throw std::runtime_error("CPU tried to write into ROM memory\n"); }

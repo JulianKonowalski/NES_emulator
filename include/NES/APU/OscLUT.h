@@ -8,9 +8,11 @@ class OscLUT {
     friend class APU;   //only APU can create this LUT
 
     using Byte = uint8_t;
+    using Word = uint16_t;
 
     const float& getDutyCycle(const Byte& code) const { return mDutyCycles[code & 0x3]; }
     const Byte& getNoteLength(const Byte& code) const { return mNoteLengths[code & 0x1F]; }
+    const Word& getNoiseFrequency(const Byte& code) const { return mNoiseFrequency[code & 0xF]; }
 
     const float mDutyCycles[4] = {
         0.125f,
@@ -52,6 +54,25 @@ class OscLUT {
         Byte(28),
         Byte(32),
         Byte(30)
+    };
+
+    const Word mNoiseFrequency[16] = {
+        Word(4),
+        Word(8),
+        Word(16),
+        Word(32),
+        Word(64),
+        Word(96),
+        Word(128),
+        Word(160),
+        Word(202),
+        Word(254),
+        Word(380),
+        Word(508),
+        Word(762),
+        Word(1016),
+        Word(2034),
+        Word(4068)
     };
 };
 

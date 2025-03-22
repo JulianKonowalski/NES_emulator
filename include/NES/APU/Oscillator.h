@@ -1,91 +1,205 @@
 #ifndef OSCILLATOR_H
 #define OSCILLATOR_H
 
-class Oscillator {
+#include <cstdint>
+
+static constexpr float MAX_AMPLITUDE = 15.0f;
+static constexpr float CPU_CLOCK_SPEED = 1789773.0f;
+
+class APUOscillator {
 public:
 
-	Oscillator(const unsigned int& sampleRate);
-	Oscillator(void);
+    using Byte = uint8_t;
+    using Word = uint16_t;
 
-	void setAmplitude(const float& amplitude);
-	float getAmplitude(void) { return mAmplitude; }
+    APUOscillator(void);
 
-	void setSampleRate(const unsigned int& sampleRate) { mSampleRate = sampleRate; }
-	int getSampleRate(void) { return mSampleRate; }
+    void setEnabled(const bool& enabled);
+    void setLooping(const bool& isLooping);
+    void setConstantVolume(const bool& hasConstantVolume);
+    void setNoteLength(const Byte& length);
+    void setAmplitude(const Byte& amplitude);
+    void setFrequency(const Byte& frequency, const bool& highByte);
+    void setSampleRate(const unsigned int& sampleRate);
+
+    bool isEnabled(void) { return mIsEnabled; }
+    bool isLooping(void) { return mIsLooping; }
+    bool hasConstantVolume(void) { return mHasConstantVolume; }
+    Byte getAmplitude(void) { return mCurrentAmplitude; }
+    Word getFrequency(void) { return mFrequency; }
+    unsigned int getSampleRate(void) { return mSampleRate; }
+
+    void updateLength(void);
+    void updateVolume(void);
 
     float process(void);
 
-	inline static constexpr float DEFAULT_AMPLITUDE = 1.0f;
-	inline static constexpr unsigned int DEFAULT_SAMPLE_RATE = 44100;
+    inline static constexpr Byte DEFAULT_AMPLITUDE = 0;
+    inline static constexpr Word DEFAULT_FREQUENCY = 0xFFFF;
+    inline static constexpr unsigned int DEFAULT_SAMPLE_RATE = 44100;
 
 protected:
 
-	float mAmplitude;			//volume of the oscillator, 0.0 - 1.0
-	unsigned int mSampleRate;	//just in case someone wants more than 44,1kHz
+    bool mIsEnabled;
+    bool mIsLooping;
+    bool mHasConstantVolume;
+
+    Byte mDivider;
+    Byte mNoteLength;
+    Byte mInitialAmplitude;
+    Byte mCurrentAmplitude;
+    Word mFrequency;
+
+    float mRealAmplitude;
+    unsigned int mSampleRate;
 
 };
 
-
-class NoiseOscillator : public Oscillator {
-public:
-	using Oscillator::Oscillator;
-	float process(void);
-};
-
-
-class PitchedOscillator : public Oscillator {
-public:
-
-	PitchedOscillator(void);
-	PitchedOscillator(const unsigned int& sampleRate);
-	PitchedOscillator(const float& frequency, const unsigned int& sampleRate);
-
-	void setFrequency(const float& frequency);
-	float getFrequency(void) { return mFrequency; }
-
-	inline static constexpr float DEFAULT_FREQUENCY = 440.0f;
-
-protected:
-
-	float mFrequency;
-	float mAngle;
-	float mOffset;
-
-};
-
-
-class SinOscillator : public PitchedOscillator {
-public:
-	using PitchedOscillator::PitchedOscillator;
-	float process(void);
-};
-
-
-class TriOscillator : public PitchedOscillator {
-public:
-	using PitchedOscillator::PitchedOscillator;
-	float process(void);
-};
-
-
-class PulseOscillator : public PitchedOscillator {
+class APUNoise : public APUOscillator {
 public:
 
-	PulseOscillator(void);
-	PulseOscillator(const unsigned int& sampleRate);
-	PulseOscillator(const float& frequency, const unsigned int& sampleRate);
+    APUNoise(void);
 
-	void setDutyCycle(const float& dutyCycle);
-	float getDutyCycle(void) { return mDutyCycle; }
+    void setModeFlag(const bool& state) { mMode = state; }
+    bool getModeFlag(void) { return mMode; }
 
-	float process(void);
+    void setSampleRate(const unsigned int& sampleRate);
 
-	inline static constexpr float DEFAULT_DUTY_CYCLE = 0.5f;
-	
-protected:
+    float process(void);
 
-	float mDutyCycle;	//ratio between low and high signal
+private:
+
+    void updateRegister(void);
+
+    bool mMode;
+    Word mLFSR;
+
+    float mOffset;
+    float mAngle;
 
 };
 
-#endif
+class APUTri : public APUOscillator {
+public:
+
+    APUTri(void);
+
+    void setReloadFlag(void) { mReloadFlag = true; }    //it can only be set to true from the outside
+    void setLinearCounter(const Byte& counterValue);
+
+    void updateLength(void);
+    void updateLinearCounter(void);
+
+    void setFrequency(const Byte& frequency, const bool& highByte);
+    void setSampleRate(const unsigned int& sampleRate);
+
+    float process(void);
+
+private:
+
+    bool mReloadFlag;
+    Byte mLinearReload;
+    Byte mLinearCounter;
+
+    float mRealFrequency;
+    float mOffset;
+    float mAngle;
+
+    static constexpr float MAX_OUTPUT_VALUE = 15.0f;
+    static constexpr Byte NUM_OUTPUT_VALUES = 32;
+    static constexpr float OUTPUT_VALUES[32] = {
+        15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0,
+         0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15
+    };
+
+};
+
+class APUPulse : public APUOscillator {
+public:
+
+    APUPulse(void);
+
+    void setDutyCycle(const float& dutyCycle);
+    void setFrequency(const Byte& frequency, const bool& highByteWrite);
+    void setSampleRate(const unsigned int& sampleRate);
+
+    void setSweepEnabled(const bool& isSweeping) { mIsSweeping = isSweeping; }
+    void setSweepDown(const Byte& sweepDown) { mSweepDown = sweepDown; }
+    void setSweepShift(const Byte& shift) { mSweepShift = shift; }
+    void setSweepPeriod(const Byte& period);
+
+    void updateSweep(void);
+
+    float process(void);
+
+    static constexpr float DEFAULT_DUTY_CYCLE = 0.5f;
+
+private:
+
+    bool mIsSweeping;
+    bool mSweepDown;
+
+    Byte mSweepShift;
+    Byte mSweepPeriod;
+    Byte mSweepClock;
+
+    float mRealFrequency;
+    float mDutyCycle;
+    float mOffset;
+    float mAngle;
+
+};
+
+//class APUPulse : public PulseOscillator {
+//public:
+//
+//    using Byte = uint8_t;
+//    using Word = uint16_t;
+//
+//    APUPulse(void);
+//    APUPulse(const unsigned int& sampleRate);
+//
+//    void setEnabled(const bool& enabled) { mIsEnabled = enabled; }
+//    void setVolumeSettings(const Byte& settings);
+//
+//    void setNoteLength(const Byte& length);
+//    void setSweepSettings(const Byte& settings);
+//    void setFrequency(const Byte& frequency, const bool& highByteWrite);
+//
+//    void updateEnvelope(void);
+//    void updateLength(void);
+//    void updateSweep(void);
+//
+//    bool isEnabled(void) { return mIsEnabled; }
+//    bool isLooping(void) { return mIsLooping; }
+//    bool isSweeping(void) { return mIsSweeping; }
+//    bool hasConstantVolume(void) { return mHasConstantVolume; }
+//
+//    Byte getNoteLength(void) { return mNoteLength; }
+//    Word getInitialFreqency(void) { return mInitialFreqency; }
+//    Byte getInitialAmplitude(void) { return mInitialAmplitude; }
+//
+//    float process(void);
+//
+//private:
+//
+//    bool mIsEnabled;
+//    bool mIsLooping;
+//    bool mIsSweeping;
+//    bool mSweepDown;
+//    bool mHasConstantVolume;
+//
+//    //all are stored in NES notation
+//    Word mInitialFreqency;
+//
+//    Byte mDivider;
+//    Byte mNoteLength;
+//    Byte mSweepPeriod;
+//    Byte mSweepShift;
+//    Byte mSweepClock;
+//    Byte mInitialAmplitude;
+//    Byte mCurrentAmplitude;
+//
+//};
+
+#endif // !OSCILLATOR_H

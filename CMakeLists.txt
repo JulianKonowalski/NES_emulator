@@ -11,8 +11,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Setup RayLib
 include(FetchContent)
+
+# Setup RayLib
 FetchContent_Declare(
     raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
@@ -20,7 +21,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(raylib)
 
+# Setup JsonCpp
+FetchContent_Declare(
+    jsoncpp
+    GIT_REPOSITORY https://github.com/open-source-parsers/jsoncpp.git
+    GIT_TAG 1.8.0
+)
+FetchContent_MakeAvailable(jsoncpp)
+
 include_directories(include)
 include_directories(${FETCHCONTENT_BASE_DIR}/raylib-build/raylib/include)
+include_directories(${FETCHCONTENT_BASE_DIR}/jsoncpp-src/include)
 
 add_subdirectory(src)

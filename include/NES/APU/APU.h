@@ -7,9 +7,6 @@
 #include "NES/APU/OscLUT.h"
 #include "IO/Window.h"
 
-static constexpr float CPU_CLOCK_SPEED = 1789773.0f;
-static constexpr float MAX_AMPLITUDE = 15.0f;
-
 enum VOL_MASK {
     DUTY =      0b11000000,
     LOOPING =   0b00100000,
@@ -43,77 +40,9 @@ enum APU_REGISTER {
     DMC_RAW =       0x4011,
     DMC_START =     0x4012,
     DMC_LEN =       0x4013,
-    MODE =          0x4017
+    STATUS =        0x4015,
+    FRAME_COUNTER = 0x4017
 };
-
-
-/* APU OSCILLATORS */
-
-/*
-* This class may be a bit confusing
-* but basically it's an overlay
-* that I use on top of my oscillators
-* to accomodate their functionality
-* to how NES passes and stores info
-* about notes to play
-*/
-
-class APUPulse : public PulseOscillator {
-public:
-
-    using Byte = uint8_t;
-    using Word = uint16_t;
-
-    APUPulse(void);
-    APUPulse(const unsigned int& sampleRate);
-
-    void setEnabled(const bool& enabled) { mIsEnabled = enabled; }
-    void setVolumeSettings(const Byte& settings);
-
-    void setNoteLength(const Byte& length);
-    void setSweepSettings(const Byte& settings);
-    void setFrequency(const Byte& frequency, const bool& highByteWrite);
-
-    void updateEnvelope(void);
-    void updateLength(void);
-    void updateSweep(void);
-
-    bool isEnabled(void) { return mIsEnabled; }
-    bool isLooping(void) { return mIsLooping; }
-    bool isSweeping(void) { return mIsSweeping; }
-    bool hasConstantVolume(void) { return mHasConstantVolume; }
-
-    Byte getNoteLength(void) { return mNoteLength; }
-    Word getInitialFreqency(void) { return mInitialFreqency; }
-    Byte getInitialAmplitude(void) { return mInitialAmplitude; }
-
-    float process(void);
-
-private:
-
-    bool mIsEnabled;
-    bool mIsLooping;
-    bool mIsSweeping;
-    bool mSweepDown;
-    bool mHasConstantVolume;
-
-    //all are stored in NES notation
-    Word mInitialFreqency;
-
-    Byte mDivider;
-    Byte mNoteLength;
-    Byte mSweepPeriod;
-    Byte mSweepShift;
-    Byte mSweepClock;
-    Byte mInitialAmplitude;
-    Byte mCurrentAmplitude;
-
-};
-
-
-
-
-/* APU */
 
 class APU {
 public:
@@ -130,7 +59,6 @@ public:
     void writeRegister(const Byte& data, const Word& address);
     void update(void* buffer, unsigned int frames);
 
-
 private:
 
     void writePulseVolume(const Byte& data, const Byte& oscIdx);
@@ -138,15 +66,24 @@ private:
     void writePulseLo(const Byte& data, const Byte& oscIdx);
     void writePulseHi(const Byte& data, const Byte& oscIdx);
 
+    void writeTriLinear(const Byte& data);
+    void writeTriLo(const Byte& data);
+    void writeTriHi(const Byte& data);
+
+    void writeNoiseVolume(const Byte& data);
+    void writeNoiseLo(const Byte& data);
+    void writeNoiseHi(const Byte& data);
+
+    void updateStatus(const Byte& data);
+
     float getSample(void);
 
     OscLUT mOscLUT;
-
-    APUPulse mPulseOscillator[2];
-    TriOscillator mTriOscillator;
-    NoiseOscillator mNoiseOscillator;
-
     Byte mMode;
+
+    APUPulse mPulse[2];
+    APUTri mTriangle;
+    APUNoise mNoise;
 
     unsigned short mCycles;
 

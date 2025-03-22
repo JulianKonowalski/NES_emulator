@@ -3,140 +3,18 @@
 using Byte = APU::Byte;
 using Word = APU::Word;
 
-/* APU OSCILLATORS */
-
-APUPulse::APUPulse(void) :
-    PulseOscillator::PulseOscillator(),
-    mIsEnabled(false),
-    mIsLooping(false),
-    mIsSweeping(false),
-    mSweepDown(false),
-    mHasConstantVolume(false),
-    mDivider(0),
-    mNoteLength(0),
-    mSweepPeriod(0),
-    mSweepShift(0),
-    mSweepClock(0),
-    mInitialFreqency(0),
-    mInitialAmplitude(0),
-    mCurrentAmplitude(0)
-{}
-
-APUPulse::APUPulse(const unsigned int& sampleRate) :
-    PulseOscillator::PulseOscillator(sampleRate),
-    mIsEnabled(false),
-    mIsLooping(false),
-    mIsSweeping(false),
-    mSweepDown(false),
-    mHasConstantVolume(false),
-    mDivider(0),
-    mNoteLength(0),
-    mSweepPeriod(0),
-    mSweepShift(0),
-    mSweepClock(0),
-    mInitialFreqency(0),
-    mInitialAmplitude(0),
-    mCurrentAmplitude(0)
-{}
-
-void APUPulse::setVolumeSettings(const Byte& settings) {
-    mIsLooping = settings & VOL_MASK::LOOPING;
-    mInitialAmplitude = settings & VOL_MASK::VOLUME;
-    mHasConstantVolume = settings & VOL_MASK::CONSTVOL;
-    mCurrentAmplitude = mHasConstantVolume ? mInitialAmplitude : (Byte)MAX_AMPLITUDE;
-    mDivider = mInitialAmplitude;
-    PulseOscillator::setAmplitude(mCurrentAmplitude / MAX_AMPLITUDE);
-}
-
-void APUPulse::setNoteLength(const Byte& length) {
-    mNoteLength = length;
-}
-
-void APUPulse::setSweepSettings(const Byte& settings) {
-    mIsSweeping = settings & SWEEP_MASK::ENABLE;
-    if (!mIsSweeping) { return; }
-
-    mSweepPeriod = (settings & SWEEP_MASK::PERIOD) >> 4;
-    mSweepClock = mSweepPeriod;
-    mSweepDown = settings & SWEEP_MASK::DIRECTION;
-    mSweepShift = settings & SWEEP_MASK::SHIFT;
-}
-
-void APUPulse::setFrequency(const Byte& frequency, const bool& highByteWrite) {
-    if (!highByteWrite) {
-        mInitialFreqency = (mInitialFreqency & 0xFF00) | frequency;
-    } else {
-        mIsEnabled = true;
-        mInitialFreqency = (mInitialFreqency & 0x00FF) | (frequency << 8);
-        PulseOscillator::setFrequency(
-            CPU_CLOCK_SPEED
-            / ( (mInitialFreqency + 1) << 4 )
-        );
-    }
-}   
-
-void APUPulse::updateEnvelope(void) {
-
-    if (!mIsEnabled || mHasConstantVolume) { return; } //no need to update
-    if (--mDivider) { return; } //divider > 0
-
-    mDivider = mInitialAmplitude + 1;
-    if (mCurrentAmplitude != 0) {
-        --mCurrentAmplitude;
-    } else {
-        mCurrentAmplitude = mIsLooping ? (Byte)MAX_AMPLITUDE : 0;
-    }
-    PulseOscillator::setAmplitude(mCurrentAmplitude / 15.0f);
-
-}
-
-void APUPulse::updateLength(void) {
-    if (!mIsEnabled || mIsLooping)
-        return;
-
-    if (--mNoteLength == 0)
-        mIsEnabled = false;
-}
-
-void APUPulse::updateSweep(void) {
-    //the sweep unit mutes the oscillator, even when it's not enabled
-    if (mInitialFreqency < 8 || mInitialFreqency > 0x7FF)
-        mIsEnabled = false;
-
-    if (!mIsEnabled || !mIsSweeping || mSweepClock == 0) { return; }
-    else if (--mSweepClock) { return; }
-
-    mSweepClock = mNoteLength != 0 ? mSweepPeriod : 0;
-
-    Byte freqChange = mInitialFreqency >> mSweepShift;
-    mInitialFreqency = mSweepDown ? mInitialFreqency - freqChange : mInitialFreqency + freqChange;
-    PulseOscillator::setFrequency(
-        CPU_CLOCK_SPEED
-        / ( (mInitialFreqency + 1) << 4 )
-    );
-}
-
-float APUPulse::process(void) {
-    return mIsEnabled ? PulseOscillator::process() : 0.0f;
-}
-
-/* APU */
-
 APU::APU(Window* window, const unsigned int& sampleRate) :
     mCycles(0),
+    mMode(0),
     mAudioBufferSize(window->getAudioBufferSize())
 {
     mAudioBuffer = new short[mAudioBufferSize];
 
-    mPulseOscillator[0].setAmplitude(0.0);
-    mPulseOscillator[1].setAmplitude(0.0);
-    mTriOscillator.setAmplitude(0.0f);
-    mNoiseOscillator.setAmplitude(0.0f);
-    if (sampleRate != Oscillator::DEFAULT_SAMPLE_RATE) {
-        mPulseOscillator[0].setSampleRate(sampleRate);
-        mPulseOscillator[1].setSampleRate(sampleRate);
-        mTriOscillator.setSampleRate(sampleRate);
-        mNoiseOscillator.setSampleRate(sampleRate);
+    if (sampleRate != APUOscillator::DEFAULT_SAMPLE_RATE) {
+        mPulse[0].setSampleRate(sampleRate);
+        mPulse[1].setSampleRate(sampleRate);
+        mTriangle.setSampleRate(sampleRate);
+        mNoise.setSampleRate(sampleRate);
     }
 
     window->setAudioStreamCallback(
@@ -155,37 +33,66 @@ void APU::clock(void) {
     ++mCycles;
     switch (mCycles) { //these are predefined cycles and their behaviour
         case 3728:  //quarter frame
-            for (int i = 0; i < 2; ++i) {
-                mPulseOscillator[i].updateEnvelope();
-            }
+            mPulse[0].updateVolume();
+            mPulse[1].updateVolume();
+            mTriangle.updateLinearCounter();
+            mNoise.updateVolume();
             break;
         case 7456:  //half frame
-            for (int i = 0; i < 2; ++i) {
-                mPulseOscillator[i].updateEnvelope();
-                mPulseOscillator[i].updateLength();
-                mPulseOscillator[i].updateSweep();
-            }
+            mPulse[0].updateVolume();
+            mPulse[0].updateLength();
+            mPulse[0].updateSweep();
+
+            mPulse[1].updateVolume();
+            mPulse[1].updateLength();
+            mPulse[1].updateSweep();
+
+            mTriangle.updateLinearCounter();
+            mTriangle.updateLength();
+
+            mNoise.updateVolume();
+            mNoise.updateLength();
             break;
         case 11185: //quarter frame
-            for (int i = 0; i < 2; ++i) {
-                mPulseOscillator[i].updateEnvelope();
-            }
+            mPulse[0].updateVolume();
+
+            mPulse[1].updateVolume();
+
+            mTriangle.updateLinearCounter();
+
+            mNoise.updateVolume();
             break;
         case 14914: //half frame
             if (mMode >> 7) { return; } //if in 5 step mode, the rest is executed quarter frame later
-            for (int i = 0; i < 2; ++i) {
-                mPulseOscillator[i].updateEnvelope();
-                mPulseOscillator[i].updateLength();
-                mPulseOscillator[i].updateSweep();
-            }
+            mPulse[0].updateVolume();
+            mPulse[0].updateLength();
+            mPulse[0].updateSweep();
+
+            mPulse[1].updateVolume();
+            mPulse[1].updateLength();
+            mPulse[1].updateSweep();
+
+            mTriangle.updateLinearCounter();
+            mTriangle.updateLength();
+
+            mNoise.updateVolume();
+            mNoise.updateLength();
             mCycles = 0;
             break;
         case 18640: //this is reached only in 5 step mode
-            for (int i = 0; i < 2; ++i) {
-                mPulseOscillator[i].updateEnvelope();
-                mPulseOscillator[i].updateLength();
-                mPulseOscillator[i].updateSweep();
-            }
+            mPulse[0].updateVolume();
+            mPulse[0].updateLength();
+            mPulse[0].updateSweep();
+
+            mPulse[1].updateVolume();
+            mPulse[1].updateLength();
+            mPulse[1].updateSweep();
+
+            mTriangle.updateLinearCounter();
+            mTriangle.updateLength();
+
+            mNoise.updateVolume();
+            mNoise.updateLength();
             mCycles = 0;
             break;
         default: break;
@@ -204,18 +111,12 @@ void APU::writeRegister(const Byte& data, const Word& address) {
         case SQ2_SWEEP: this->writePulseSweep(data, 1);     break;
         case SQ2_LO:    this->writePulseLo(data, 1);        break;
         case SQ2_HI:    this->writePulseHi(data, 1);        break;
-        case TRI_LINEAR:
-            break;
-        case TRI_LO:
-            break;
-        case TRI_HI:
-            break;
-        case NOISE_VOL:
-            break;
-        case NOISE_LO:
-            break;
-        case NOISE_HI:
-            break;
+        case TRI_LINEAR:this->writeTriLinear(data);         break;
+        case TRI_LO:    this->writeTriLo(data);             break;
+        case TRI_HI:    this->writeTriHi(data);             break;
+        case NOISE_VOL: this->writeNoiseVolume(data);       break;
+        case NOISE_LO:  this->writeNoiseLo(data);           break;
+        case NOISE_HI:  this->writeNoiseHi(data);           break;
         case DMC_FREQ:
             break;
         case DMC_RAW:
@@ -224,8 +125,9 @@ void APU::writeRegister(const Byte& data, const Word& address) {
             break;
         case DMC_LEN:
             break;
-        case MODE:      mMode = data;                       break;
-        default:        break;
+        case STATUS:    this->updateStatus(data);           break;
+        case FRAME_COUNTER:     mMode = data;               break;
+        default:                                            break;
     }
 }
 
@@ -237,27 +139,73 @@ void APU::update(void* buffer, unsigned int frames) {
 }
 
 void APU::writePulseVolume(const Byte& data, const Byte& oscIdx) {
-    mPulseOscillator[oscIdx].setDutyCycle(mOscLUT.getDutyCycle((data & VOL_MASK::DUTY) >> 6));
-    mPulseOscillator[oscIdx].setVolumeSettings(data);
+    Byte dutyCycleCode = (data & VOL_MASK::DUTY) >> 6;
+    mPulse[oscIdx].setDutyCycle(mOscLUT.getDutyCycle(dutyCycleCode));
+    mPulse[oscIdx].setLooping(data & VOL_MASK::LOOPING);
+    mPulse[oscIdx].setConstantVolume(data & VOL_MASK::CONSTVOL);
+    mPulse[oscIdx].setAmplitude(data & VOL_MASK::VOLUME);
 }
 
 void APU::writePulseSweep(const Byte& data, const Byte& oscIdx) {
-    mPulseOscillator[oscIdx].setSweepSettings(data);
+    mPulse[oscIdx].setSweepEnabled(data & SWEEP_MASK::ENABLE);
+    mPulse[oscIdx].setSweepPeriod((data & SWEEP_MASK::PERIOD) >> 4);
+    mPulse[oscIdx].setSweepDown(data & SWEEP_MASK::DIRECTION);
+    mPulse[oscIdx].setSweepShift(data & SWEEP_MASK::SHIFT);
 }
 
 void APU::writePulseLo(const Byte& data, const Byte& oscIdx) {
-    mPulseOscillator[oscIdx].setFrequency(data, false);
+    mPulse[oscIdx].setFrequency(data, false);
 }
 
 void APU::writePulseHi(const Byte& data, const Byte& oscIdx) {
-    mPulseOscillator[oscIdx].setEnabled(true);
-    mPulseOscillator[oscIdx].setNoteLength(mOscLUT.getNoteLength(data >> 3));
-    mPulseOscillator[oscIdx].setFrequency(data & 0x07, true);
+    mPulse[oscIdx].setNoteLength(mOscLUT.getNoteLength(data >> 3));
+    mPulse[oscIdx].setFrequency(data & 0x7, true);
+}
+
+void APU::writeTriLinear(const Byte& data) {
+    mTriangle.setLooping(data & (1 << 7));
+    mTriangle.setLinearCounter(data & ~(1 << 7));
+}
+
+void APU::writeTriLo(const Byte& data) {
+    mTriangle.setFrequency(data, false);
+}
+
+void APU::writeTriHi(const Byte& data) {
+    mTriangle.setFrequency((data & 0x7), true);
+    mTriangle.setNoteLength(mOscLUT.getNoteLength(data >> 3));
+    mTriangle.setReloadFlag();
+}
+
+void APU::writeNoiseVolume(const Byte& data) {
+    mNoise.setAmplitude(data & 0x0F);
+    mNoise.setConstantVolume(data & (1 << 4));
+    mNoise.setLooping(data & (1 << 5));
+}
+
+void APU::writeNoiseLo(const Byte& data) {
+    mNoise.setModeFlag(data & (1 << 7));
+    Word freq = mOscLUT.getNoiseFrequency(data & 0x0F);
+    mNoise.setFrequency(freq, false);
+    mNoise.setFrequency((freq >> 8) & 0x7, true);
+}
+
+void APU::writeNoiseHi(const Byte& data) {
+    mNoise.setNoteLength(mOscLUT.getNoteLength(data >> 3));
+}
+
+void APU::updateStatus(const Byte& data) {
+    mPulse[0].setEnabled(data & 1);
+    mPulse[1].setEnabled(data & (1 << 1));
+    mTriangle.setEnabled(data & (1 << 2));
+    mNoise.setEnabled(data & (1 << 3));
 }
 
 float APU::getSample(void) {
     float sample = 0;
-    sample += mPulseOscillator[0].process();
-    sample += mPulseOscillator[1].process();
-    return sample / 2;
+    sample += mPulse[0].process();
+    sample += mPulse[1].process();
+    sample += mTriangle.process();
+    sample += mNoise.process();
+    return sample / 4;
 }
