@@ -7,20 +7,14 @@
 
 int main(int argc, char* argv[]) {
 
-    std::string filepath;
-
     if (argc != 2) {
-        //std::cout << "Incorrect number of arguments. Usage:\n";
-        //std::cout << ">./NES_emulator.exe <iNES filepath>\n\n";
-        //exit(0);
-
-        filepath = "C:\\Users\\Julek\\Desktop\\Szkoła\\II rok\\projektIndywidualny\\NES_emulator\\tests\\superMarioBros.nes";
-    } else {
-        filepath = argv[1];
+        std::cout << "Incorrect number of arguments. Usage:\n";
+        std::cout << ">./NES_emulator.exe <iNES filepath>\n\n";
+        exit(0);
     }
 
     try {
-        Cartridge cartridge(filepath);
+        Cartridge cartridge(argv[1]);
         NES nes(cartridge);
         nes.run();
     } catch (std::runtime_error& error) {
