@@ -84,7 +84,7 @@ public:
 
     APUTri(void);
 
-    void setReloadFlag(void) { mReloadFlag = true; }    //it can only be set to true from the outside
+    void setReloadFlag(void) { mReloadFlag = true; }    //it can only be set to true
     void setLinearCounter(const Byte& counterValue);
 
     void updateLength(void);
@@ -150,56 +150,5 @@ private:
 
 };
 
-//class APUPulse : public PulseOscillator {
-//public:
-//
-//    using Byte = uint8_t;
-//    using Word = uint16_t;
-//
-//    APUPulse(void);
-//    APUPulse(const unsigned int& sampleRate);
-//
-//    void setEnabled(const bool& enabled) { mIsEnabled = enabled; }
-//    void setVolumeSettings(const Byte& settings);
-//
-//    void setNoteLength(const Byte& length);
-//    void setSweepSettings(const Byte& settings);
-//    void setFrequency(const Byte& frequency, const bool& highByteWrite);
-//
-//    void updateEnvelope(void);
-//    void updateLength(void);
-//    void updateSweep(void);
-//
-//    bool isEnabled(void) { return mIsEnabled; }
-//    bool isLooping(void) { return mIsLooping; }
-//    bool isSweeping(void) { return mIsSweeping; }
-//    bool hasConstantVolume(void) { return mHasConstantVolume; }
-//
-//    Byte getNoteLength(void) { return mNoteLength; }
-//    Word getInitialFreqency(void) { return mInitialFreqency; }
-//    Byte getInitialAmplitude(void) { return mInitialAmplitude; }
-//
-//    float process(void);
-//
-//private:
-//
-//    bool mIsEnabled;
-//    bool mIsLooping;
-//    bool mIsSweeping;
-//    bool mSweepDown;
-//    bool mHasConstantVolume;
-//
-//    //all are stored in NES notation
-//    Word mInitialFreqency;
-//
-//    Byte mDivider;
-//    Byte mNoteLength;
-//    Byte mSweepPeriod;
-//    Byte mSweepShift;
-//    Byte mSweepClock;
-//    Byte mInitialAmplitude;
-//    Byte mCurrentAmplitude;
-//
-//};
 
 #endif // !OSCILLATOR_H
