@@ -8,6 +8,12 @@
 class MOS6502;
 enum ProcessorFlag;
 
+/**
+* Base class for representing
+* MOS6502 operations.
+* 
+* @see MOS6502
+*/
 class Operation {
 public:
 
@@ -16,25 +22,166 @@ public:
 
 	void operator=(const Operation& other) = delete;
 
+	/**
+	* Executes the operation.
+	* 
+	* @param cpu CPU that
+	*	executes the operation
+	*/
 	virtual void execute(MOS6502& cpu) { /*DO_NOTHING*/ }
 
 protected:
 
+	/**
+	* Default class constructor.
+	*/
 	Operation(void) {}
 
+	/**
+	* Writes a byte of data
+	* to a given address.
+	* 
+	* @param cpu CPU that executes
+	*	the operation
+	* @param data data to be written
+	*	under a given address
+	* @param address address to write
+	*	data to
+	*/
 	void writeMemory(MOS6502& cpu, const Byte& data, const Word& address);
+
+	/**
+	* Pushes a value onto
+	* the CPU stack.
+	* 
+	* @param cpu CPU that executes
+	*	the operation
+	* @param data data to be pushed
+	*	on the stack
+	*/
 	void pushStack(MOS6502& cpu, const Byte& data);
+
+	/**
+	* Adds cycles to the CPU's
+	* clock counter.
+	* 
+	* @param cpu CPU that executes
+	*	the operation
+	* @param cycles amount of cycles
+	*	to add to the CPU clock counter
+	*/
 	void addCycles(MOS6502& cpu, const Byte& cycles);
+
+	/**
+	* Sets the CPU's X register
+	* to a given value.
+	* 
+	* @param cpu CPU that executes
+	*	the instruction
+	* @param status new X register
+	*	value
+	*/
 	void setCpuX(MOS6502& cpu, const Byte& value);
+
+	/**
+	* Sets the CPU's Y register
+	* to a given value.
+	* 
+	* @param cpu CPU that executes
+	*	the instruction
+	* @param status new Y register
+	*	value
+	*/
 	void setCpuY(MOS6502& cpu, const Byte& value);
+
+	/**
+	* Sets the CPU's accumulator
+	* register to a given value.
+	* 
+	* @param cpu CPU that executes
+	*	the instruction
+	* @param status new accumulator
+	*	register value
+	*/
 	void setCpuAccumulator(MOS6502& cpu, const Byte& value);
+
+	/**
+	* Sets the CPU's status
+	* to a given value.
+	* 
+	* @param cpu CPU that executes
+	*	the instruction
+	* @param status new status
+	*	value
+	*/
 	void setCpuStatus(MOS6502& cpu, const Byte& status);
+
+	/**
+	* Sets the CPU's stack
+	* pointer to a given value.
+	* 
+	* @param cpu CPU that executes
+	*	the instruction
+	* @param value new stack pointer
+	*	value
+	*/
 	void setCpuStackPointer(MOS6502& cpu, const Byte& value);
+
+	/**
+	* Sets the CPU's program
+	* counter to a given value.
+	* 
+	* @param cpu CPU that executes
+	*	the operation
+	* @param value new program counter
+	*	value
+	*/
 	void setCpuProgramCounter(MOS6502& cpu, const Word& value);
+
+	/**
+	* Sets or clears a specific
+	* status flag of the CPU.
+	* 
+	* @param cpu CPU that executes
+	*	the operation
+	* @param flag a flag to be set
+	*	or cleared
+	* @state new state of the flag
+	*/
 	void setCpuFlag(MOS6502& cpu, const ProcessorFlag& flag, const bool& state);
 
-	Byte fetchByte(MOS6502& cpu); //fetch from program counter address
-	Byte fetchByte(MOS6502& cpu, const Word& address); //fetch from absolute address
+	/**
+	* Fetches a byte of data from
+	* the address pointed to by
+	* the CPU's program counter.
+	* 
+	* @param cpu CPU that executes
+	*	the operation
+	* 
+	* @return fetched data
+	*/
+	Byte fetchByte(MOS6502& cpu); 
+
+	/**
+	* Fetches a byte of data from
+	* the given address.
+	* 
+	* @param cpu CPU that executes
+	*	the operation
+	* 
+	* @return fetched data
+	*/
+	Byte fetchByte(MOS6502& cpu, const Word& address);
+
+	/**
+	* Fetches a byte of data
+	* from the CPU's stack.
+	* 
+	* @param cpu CPU that
+	*	executes the operation
+	* 
+	* @return fetched data
+	*/
 	Byte fetchStack(MOS6502& cpu);
 
 };

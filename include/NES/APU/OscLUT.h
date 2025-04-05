@@ -3,17 +3,64 @@
 
 #include <cstdint>
 
+/**
+* Lookup table for the 
+* pulse oscillator's
+* duty cycles, note lengths
+* and noise oscillator's
+* frequencies.
+* 
+* @see APU
+* @see APUNoise
+* @see APUPulse
+*/
 class OscLUT {
 
     friend class APU;   //only APU can create this LUT
 
     using Byte = uint8_t;
     using Word = uint16_t;
-
+    
+    /**
+    * Returns the duty cycle
+    * for the given code.
+    * 
+    * @param code duty cycle
+    *   code
+    * 
+    * @return fetched duty cycle
+    * 
+    * @see mDutyCycles
+    */
     const float& getDutyCycle(const Byte& code) const { return mDutyCycles[code & 0x3]; }
+
+    /**
+    * Returns the note length
+    * for the given code.
+    * 
+    * @param code note length
+    *   code
+    * 
+    * @return fetched note length
+    * 
+    * @see mNoteLengths
+    */
     const Byte& getNoteLength(const Byte& code) const { return mNoteLengths[code & 0x1F]; }
+
+    /**
+    * Returns the nose frequency
+    * for the given code.
+    * 
+    * @param code noise frequency
+    *   code
+    * 
+    * @return fetched noise frequency
+    * 
+    * @see mNoiseFrequency
+    */
     const Word& getNoiseFrequency(const Byte& code) const { return mNoiseFrequency[code & 0xF]; }
 
+    /** An array of available duty cycles */
     const float mDutyCycles[4] = {
         0.125f,
         0.250f,
@@ -21,6 +68,7 @@ class OscLUT {
         0.750f
     };
 
+    /** An array of available note lengths */
     const Byte mNoteLengths[32] = {
         Byte(10),
         Byte(254),
@@ -56,6 +104,7 @@ class OscLUT {
         Byte(30)
     };
 
+    /** An array of available noise frequencies */
     const Word mNoiseFrequency[16] = {
         Word(4),
         Word(8),

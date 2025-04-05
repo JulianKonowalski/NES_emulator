@@ -10,30 +10,50 @@
 class MOS6502;
 
 /**
-* To avoid confusion:
-* Instruction is a class that consists of 
-* an operation and an addressing mode.
-* Addressing mode is telling the Instruction
-* where it'll find the data (if it needs
-* any to execute) and the operation will
-* tell it what to do, like executing an
-* LDA command.
+* Class that consists of 
+* an operation and an 
+* addressing mode.
+* 
+* @see AddressingMode
+* @see Operation
 */
-
 class Instruction {
 
-	friend class OpcodeLUT; //only LUT can create Instructions and bind them to opcodes
+	friend class OpcodeLUT;
 
 public:
 
 	using Byte = uint8_t;
 	using Word = uint16_t;
 
+	/**
+	* Executes and operation
+	* stored in the instruction.
+	* 
+	* @param cpu CPU that executes
+	*	the operation
+	* 
+	* @see MOS6502
+	*/
 	void execute(MOS6502& cpu);
+
+	/**
+	* Returns the type of
+	* addressing mode of
+	* the operation.
+	* 
+	* @return operation's
+	*	addressing mode
+	*/
 	static AddressingMode* getAddressingMode(void) { return sAddressingMode; }
 
 private:
 
+	/**
+	* Class constructor. Creates
+	* an instance of the class
+	* with default parameters.
+	*/
 	Instruction(void) :
 		mLabel(""),
 		mOperation(UndefinedOperation::getInstance()),
@@ -41,6 +61,20 @@ private:
 		mCycles(0)
 	{}
 
+	/**
+	* Class constructor. Creates
+	* an instance of the class
+	* with given parameters.
+	* 
+	* @param label a label of
+	*	the instruction
+	* @param operation operation
+	*	type of the instruction
+	* @param addressingMode addressing
+	*	mode type of the instruction
+	* @param cycles cost of the instruction
+	*	in CPU cycles
+	*/
 	Instruction(const std::string& label, Operation* operation, AddressingMode* addresingMode, const Byte& cycles) :
 		mLabel(label),
 		mOperation(operation),
@@ -50,13 +84,28 @@ private:
 
 	void operator=(const Instruction& other);
 
+	/**
+	* Fetches the address of the
+	* argument of the operation.
+	* 
+	* @param cpu CPU that executes
+	*	the instruction
+	*/
 	void fetchAddress(MOS6502& cpu);
 
-	std::string mLabel; //these are useful when debugging, otherwise they don't serve any purpose
+	/** Instruction label */
+	std::string mLabel;
+
+	/** Operation type of the instruction */
 	Operation* mOperation;
+
+	/** Addressing mode type of the instruction */
 	AddressingMode* mAddressingMode;
+
+	/** Cost of the operation in CPU cycles */
 	Byte mCycles;
 
+	/** Pointer to the addressing mode type */
 	static AddressingMode* sAddressingMode;
 };
 

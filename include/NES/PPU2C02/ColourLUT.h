@@ -3,41 +3,107 @@
 
 #include <cstdint>
 
+/**
+* Class representing
+* an RGB colour.
+*/
 class Colour {
 public:
 
     using Byte = uint8_t;
 
+    /**
+    * Class constructor.
+    * Initializes a class
+    * instance with default
+    * values.
+    */
     Colour(void) :
         mR(0),
         mG(0),
         mB(0)
     {}
 
+    /**
+    * Class constructor.
+    * Initializes a class
+    * instance with given
+    * values.
+    * 
+    * @param red red value
+    * @param green green value
+    * @param blue blue value
+    */
     Colour(Byte red, Byte green, Byte blue) :
         mR(red),
         mG(green),
         mB(blue)
     {}
 
+    /**
+    * Returns the red value
+    * of the color.
+    * 
+    * @return red value of the colour
+    */
     Byte red(void) const { return mR; }
+
+    /**
+    * Returns the green value
+    * of the color.
+    * 
+    * @return green value of the colour
+    */
     Byte green(void) const { return mG; }
+
+    /**
+    * Returns the blue value
+    * of the color.
+    * 
+    * @return blue value of the colour
+    */
     Byte blue(void) const { return mB; }
 
 private:
+
+    /** Red value of the colour */
     Byte mR;
+
+    /** Green value of the colour */
     Byte mG;
+
+    /** Blue value of the colour */
     Byte mB;
 };
 
+/**
+* A lookup table for
+* colours supported by
+* by the NES PPU.
+* 
+* @see PPU
+*/
 class ColourLUT {
 
     using Byte = uint8_t;
 
     friend class PPU2C02;   //only PPU can create this LUT
 
+    /**
+    * Returns the colour for
+    * the fiven colour code.
+    * 
+    * @param code colour code
+    * 
+    * @return fetched colour
+    */
     const Colour& operator[](const Byte& code) const { return mColours[code & 0x3F]; }
 
+    /**
+    * An array of colours
+    * supported by the 
+    * NES' PPU.
+    */
     Colour mColours[64] = {
         Colour(84, 84, 84),
         Colour(0, 30, 116),

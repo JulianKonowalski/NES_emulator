@@ -7,13 +7,40 @@
 #include "NES/MOS6502/Operation.h"
 #include "NES/MOS6502/AddressingMode.h"
 
+/**
+* Lookup table for all
+* available opcodes and
+* their corresponding 
+* operations and addressing
+* modes supported by the
+* MOS6502 CPU.
+* 
+* @see MOS6502
+* @see Instruction
+* @see Operation
+* @see AddressingMode
+*/
 class OpcodeLUT {
 
-    friend class MOS6502; //only CPU can create this LUT
+    friend class MOS6502;
     using Byte = uint8_t;
 
+    /**
+    * Fetches the Instruction object
+    * based on a given opcode.
+    * 
+    * @param code code of the operation
+    * 
+    * @return Instruction object 
+    *   corresponding to the given opcode
+    */
     Instruction& operator[](const Byte& code) { return mOpcodes[code]; }
 
+    /**
+    * An array of Instruction objects
+    * where each operation is in a position
+    * corresponding to its opcode.
+    */
     Instruction mOpcodes[256] = {
         Instruction("BRK", BRK::getInstance(), IMP::getInstance(), 7),
         Instruction("ORA indirect X", ORA::getInstance(), IDX::getInstance(), 6),
