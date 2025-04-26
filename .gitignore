@@ -10,6 +10,9 @@ cc65/
 # Rough unit tests to get in the ballpark of functionality
 tests/
 
+# Documentation files
+documentation/
+
 # Test programs for NES components
 *.bin
 *.nes

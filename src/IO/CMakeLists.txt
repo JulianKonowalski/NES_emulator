@@ -12,4 +12,11 @@ target_link_libraries(
     IO
     PRIVATE
     raylib_static
+    jsoncpp_lib_static
+)
+
+target_compile_definitions(
+  IO
+  PRIVATE
+  CONFIG_PATH="${CONFIG_FILE_PATH}"
 )

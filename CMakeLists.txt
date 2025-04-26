@@ -33,4 +33,6 @@ include_directories(include)
 include_directories(${FETCHCONTENT_BASE_DIR}/raylib-build/raylib/include)
 include_directories(${FETCHCONTENT_BASE_DIR}/jsoncpp-src/include)
 
+set(CONFIG_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/config.json")
+
 add_subdirectory(src)
