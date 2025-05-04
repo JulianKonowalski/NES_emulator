@@ -72,7 +72,7 @@ public:
     * @see ScreenOptions
     * @see AudioOptions
     */
-    static Window* getInstance(Joypad& joypad, const ScreenOptions& screenOptions, const AudioOptions& audioOptions);
+    static Window* getInstance(Joypad* joypads, const ScreenOptions& screenOptions, const AudioOptions& audioOptions);
 
     /**
     * Deletes the current instance
@@ -162,7 +162,7 @@ private:
     * @see ScreenOptions
     * @see AudioOptions
     */
-    Window(Joypad& joypad, const ScreenOptions& screenOptions, const AudioOptions& audioOptions);
+    Window(Joypad* joypads, const ScreenOptions& screenOptions, const AudioOptions& audioOptions);
 
     /**
     * Class destructor. Unloads
@@ -190,7 +190,7 @@ private:
     std::function<void(void*, unsigned int)> mAudioStreamCallback;
 
     /** Joypad that stores the user input data */
-    Joypad* mJoypad;
+    Joypad* mJoypads[2];
 
     /** Application's audio stream */
     AudioStream mAudioStream;

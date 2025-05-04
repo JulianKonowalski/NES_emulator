@@ -1,6 +1,9 @@
 # VS Data
 .vs/
 
+# clangd data
+.cache/
+
 # CMake output direcotry
 out/
 

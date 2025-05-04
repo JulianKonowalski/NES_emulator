@@ -69,8 +69,8 @@ private:
 	/** Internal PPU bus */
 	PPUBus mPpuBus;
 
-	/** Joypad */
-	Joypad mJoypad;
+	/** Joypads */
+	Joypad mJoypads[2];
 };
 
 #endif // !NES_H

@@ -48,7 +48,7 @@ public:
     *   counter
     * 
     */
-    CPUBus(MOS6502& cpu, PPU2C02& ppu, APU& apu, Cartridge& cartridge, Joypad& joypad, Word& globalClock);
+    CPUBus(MOS6502& cpu, PPU2C02& ppu, APU& apu, Cartridge& cartridge, Joypad* joypads, Word& globalClock);
 
     /**
     * Performs a read from
@@ -98,7 +98,7 @@ private:
     Cartridge* mCartridge;
 
     /** Joypad component */
-    Joypad* mJoypad;
+    Joypad* mJoypads[2];
 
     /**
     * A flag to determine

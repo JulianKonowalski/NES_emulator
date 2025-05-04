@@ -1,5 +1,6 @@
 #include "IO/Window.h"
 
+#include <iostream>
 #include <cstdlib>
 #include <fstream>
 #include <thread>
@@ -8,11 +9,17 @@
 
 Window* Window::sInstance = nullptr;
 
-Window::Window(Joypad& joypad, const ScreenOptions& screenOptions, const AudioOptions& audioOptions) :
-    mJoypad(&joypad),
+Window::Window(Joypad* joypads, const ScreenOptions& screenOptions, const AudioOptions& audioOptions) :
     mScale (screenOptions.scale),
     mAudioBufferSize(4096)
 {
+    for(int i = 0; i < 2; ++i) {
+        mJoypads[i] = &joypads[i];
+        if (!mJoypads[i]) { 
+          throw std::runtime_error("Not enough joypads supplied to the Window");
+        }
+    }
+
     InitWindow(screenOptions.width * mScale, screenOptions.height * mScale, screenOptions.title.c_str());
     SetTargetFPS(60);
 
@@ -33,9 +40,9 @@ Window::~Window(void) {
     CloseWindow(); 
 }
 
-Window* Window::getInstance(Joypad& joypad, const ScreenOptions& screenOptions, const AudioOptions& audioOptions) {
+Window* Window::getInstance(Joypad* joypads, const ScreenOptions& screenOptions, const AudioOptions& audioOptions) {
     if (!sInstance)
-        sInstance = new Window(joypad, screenOptions, audioOptions);
+        sInstance = new Window(joypads, screenOptions, audioOptions);
     return sInstance;
 }
 
@@ -67,8 +74,6 @@ void Window::drawPixel(const int& posX, const int& posY, const Colour& colour) {
         {colour.red(), colour.green(), colour.blue(), 255}
     );
 }
-
-#include <iostream>
 
 void Window::handleInputs(void) {
     uint16_t
@@ -103,29 +108,57 @@ void Window::handleInputs(void) {
     
     while (!WindowShouldClose()) {
 
-        if (IsKeyDown(p1UP)) { mJoypad->setButtonState(Joypad::Button::BUTTON_UP, true); } 
-        else { mJoypad->setButtonState(Joypad::Button::BUTTON_UP, false); }
 
-        if (IsKeyDown(p1DN)) {  mJoypad->setButtonState(Joypad::Button::BUTTON_DOWN, true); } 
-        else { mJoypad->setButtonState(Joypad::Button::BUTTON_DOWN, false); }
+        // PLAYER 1
+        if (IsKeyDown(p1UP)) { mJoypads[0]->setButtonState(Joypad::Button::BUTTON_UP, true); } 
+        else { mJoypads[0]->setButtonState(Joypad::Button::BUTTON_UP, false); }
 
-        if (IsKeyDown(p1LT)) {  mJoypad->setButtonState(Joypad::Button::BUTTON_LEFT, true); } 
-        else { mJoypad->setButtonState(Joypad::Button::BUTTON_LEFT, false); }
+        if (IsKeyDown(p1DN)) {  mJoypads[0]->setButtonState(Joypad::Button::BUTTON_DOWN, true); } 
+        else { mJoypads[0]->setButtonState(Joypad::Button::BUTTON_DOWN, false); }
 
-        if (IsKeyDown(p1RT)) {  mJoypad->setButtonState(Joypad::Button::BUTTON_RIGHT, true); } 
-        else { mJoypad->setButtonState(Joypad::Button::BUTTON_RIGHT, false); }
+        if (IsKeyDown(p1LT)) {  mJoypads[0]->setButtonState(Joypad::Button::BUTTON_LEFT, true); } 
+        else { mJoypads[0]->setButtonState(Joypad::Button::BUTTON_LEFT, false); }
 
-        if (IsKeyDown(p1SL)) {  mJoypad->setButtonState(Joypad::Button::BUTTON_SELECT, true); } 
-        else { mJoypad->setButtonState(Joypad::Button::BUTTON_SELECT, false); }
+        if (IsKeyDown(p1RT)) {  mJoypads[0]->setButtonState(Joypad::Button::BUTTON_RIGHT, true); } 
+        else { mJoypads[0]->setButtonState(Joypad::Button::BUTTON_RIGHT, false); }
 
-        if (IsKeyDown(p1ST)) {  mJoypad->setButtonState(Joypad::Button::BUTTON_START, true); } 
-        else { mJoypad->setButtonState(Joypad::Button::BUTTON_START, false); }
+        if (IsKeyDown(p1SL)) {  mJoypads[0]->setButtonState(Joypad::Button::BUTTON_SELECT, true); } 
+        else { mJoypads[0]->setButtonState(Joypad::Button::BUTTON_SELECT, false); }
 
-        if (IsKeyDown(p1BA)) {  mJoypad->setButtonState(Joypad::Button::BUTTON_A, true); } 
-        else { mJoypad->setButtonState(Joypad::Button::BUTTON_A, false); }
+        if (IsKeyDown(p1ST)) {  mJoypads[0]->setButtonState(Joypad::Button::BUTTON_START, true); } 
+        else { mJoypads[0]->setButtonState(Joypad::Button::BUTTON_START, false); }
 
-        if (IsKeyDown(p1BB)) {  mJoypad->setButtonState(Joypad::Button::BUTTON_B, true); } 
-        else { mJoypad->setButtonState(Joypad::Button::BUTTON_B, false); }
+        if (IsKeyDown(p1BA)) {  mJoypads[0]->setButtonState(Joypad::Button::BUTTON_A, true); } 
+        else { mJoypads[0]->setButtonState(Joypad::Button::BUTTON_A, false); }
+
+        if (IsKeyDown(p1BB)) {  mJoypads[0]->setButtonState(Joypad::Button::BUTTON_B, true); } 
+        else { mJoypads[0]->setButtonState(Joypad::Button::BUTTON_B, false); }
+
+
+        //PLAYER 2
+        if (IsKeyDown(p2UP)) { mJoypads[1]->setButtonState(Joypad::Button::BUTTON_UP, true); } 
+        else { mJoypads[1]->setButtonState(Joypad::Button::BUTTON_UP, false); }
+
+        if (IsKeyDown(p2DN)) {  mJoypads[1]->setButtonState(Joypad::Button::BUTTON_DOWN, true); } 
+        else { mJoypads[1]->setButtonState(Joypad::Button::BUTTON_DOWN, false); }
+
+        if (IsKeyDown(p2LT)) {  mJoypads[1]->setButtonState(Joypad::Button::BUTTON_LEFT, true); } 
+        else { mJoypads[1]->setButtonState(Joypad::Button::BUTTON_LEFT, false); }
+
+        if (IsKeyDown(p2RT)) {  mJoypads[1]->setButtonState(Joypad::Button::BUTTON_RIGHT, true); } 
+        else { mJoypads[1]->setButtonState(Joypad::Button::BUTTON_RIGHT, false); }
+
+        if (IsKeyDown(p2SL)) {  mJoypads[1]->setButtonState(Joypad::Button::BUTTON_SELECT, true); } 
+        else { mJoypads[1]->setButtonState(Joypad::Button::BUTTON_SELECT, false); }
+
+        if (IsKeyDown(p2ST)) {  mJoypads[1]->setButtonState(Joypad::Button::BUTTON_START, true); } 
+        else { mJoypads[1]->setButtonState(Joypad::Button::BUTTON_START, false); }
+
+        if (IsKeyDown(p2BA)) {  mJoypads[1]->setButtonState(Joypad::Button::BUTTON_A, true); } 
+        else { mJoypads[1]->setButtonState(Joypad::Button::BUTTON_A, false); }
+
+        if (IsKeyDown(p2BB)) {  mJoypads[1]->setButtonState(Joypad::Button::BUTTON_B, true); } 
+        else { mJoypads[1]->setButtonState(Joypad::Button::BUTTON_B, false); }
 
     }
 }
