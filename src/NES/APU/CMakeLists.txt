@@ -2,6 +2,7 @@ set(
     APU_SOURCES 
     APU.cpp
     Oscillator.cpp
+    DMC.cpp
 )
 
 add_library(
@@ -12,5 +13,6 @@ add_library(
 target_link_libraries(
     APU
     PRIVATE
+    BUSES
     raylib_static
 )

@@ -8,9 +8,9 @@
 int main(int argc, char* argv[]) {
 
     if (argc != 2) {
-        std::cout << "Incorrect number of arguments. Usage:\n";
-        std::cout << ">./NES_emulator.exe <iNES filepath>\n\n";
-        exit(0);
+      std::cout << "Incorrect number of arguments. Usage:\n";
+      std::cout << ">./NES_emulator.exe <iNES filepath>\n\n";
+      exit(0);
     }
 
     try {

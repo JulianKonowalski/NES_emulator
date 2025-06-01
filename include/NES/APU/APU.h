@@ -5,7 +5,10 @@
 
 #include "NES/APU/Oscillator.h"
 #include "NES/APU/OscLUT.h"
+#include "NES/APU/DMC.h"
 #include "IO/Window.h"
+
+class CPUBus;
 
 /**
 * Masks for extracting
@@ -139,6 +142,8 @@ public:
     * @param frames audio buffer length
     */
     void update(void* buffer, unsigned int frames);
+
+    void setCpuBus(CPUBus* cpuBus) { mDMC.setCpuBus(cpuBus); }
 
 private:
 
@@ -321,6 +326,9 @@ private:
 
     /** Internal noise oscillator */
     APUNoise mNoise;
+
+    /** Internal DMC module */
+    DMC mDMC;
 
     /** Cycle counter */
     unsigned short mCycles;

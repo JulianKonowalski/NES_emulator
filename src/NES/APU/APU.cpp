@@ -31,6 +31,7 @@ APU::~APU(void) {
 
 void APU::clock(void) {
     ++mCycles;
+    //mDMC.clock();
     switch (mCycles) { //these are predefined cycles and their behaviour
         case 3728:  //quarter frame
             mPulse[0].updateVolume();
@@ -117,14 +118,10 @@ void APU::writeRegister(const Byte& data, const Word& address) {
         case NOISE_VOL: this->writeNoiseVolume(data);       break;
         case NOISE_LO:  this->writeNoiseLo(data);           break;
         case NOISE_HI:  this->writeNoiseHi(data);           break;
-        case DMC_FREQ:
-            break;
-        case DMC_RAW:
-            break;
-        case DMC_START:
-            break;
-        case DMC_LEN:
-            break;
+        //case DMC_FREQ:  mDMC.writeFlags(data);              break;
+        //case DMC_RAW:   mDMC.writeDirectLoad(data);         break;
+        //case DMC_START: mDMC.writeSampleLength(data);       break;
+        //case DMC_LEN:   mDMC.writeSampleLength(data);       break;
         case STATUS:    this->updateStatus(data);           break;
         case FRAME_COUNTER:     mMode = data;               break;
         default:                                            break;
@@ -207,5 +204,6 @@ float APU::getSample(void) {
     sample += mPulse[1].process();
     sample += mTriangle.process();
     sample += mNoise.process();
+    //sample += mDMC.process();
     return sample / 4;
 }

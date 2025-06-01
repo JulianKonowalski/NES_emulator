@@ -6,6 +6,7 @@
 
 # CMake output direcotry
 out/
+build/
 
 # Compiler & Linker for MOS6502 assembly
 cc65/

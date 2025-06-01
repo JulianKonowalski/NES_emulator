@@ -35,9 +35,9 @@ void APUOscillator::setNoteLength(const Byte& length) {
 
 void APUOscillator::setAmplitude(const Byte& amplitude) {
     mInitialAmplitude   = amplitude;
-    mCurrentAmplitude   = amplitude;
+    mCurrentAmplitude   = mHasConstantVolume ? amplitude : MAX_AMPLITUDE;
     mDivider            = amplitude;
-    mRealAmplitude      = amplitude / MAX_AMPLITUDE;
+    mRealAmplitude      = mCurrentAmplitude / MAX_AMPLITUDE;
 }
 
 void APUOscillator::setFrequency(const Byte& frequency, const bool& highByteWrite) {
@@ -52,18 +52,23 @@ void APUOscillator::setSampleRate(const unsigned int& sampleRate) {
 }
 
 void APUOscillator::updateLength(void) {
-    if (!mNoteLength) { return; }
-    if (mIsLooping) { return; }
-    if (!mIsEnabled || --mNoteLength == 0)
+    if (!mNoteLength || mIsLooping) { return; }
+    else if (!mIsEnabled || --mNoteLength == 0) {
         this->setAmplitude(0);
+    }
 }
 
 void APUOscillator::updateVolume(void) {
     if (mHasConstantVolume) { return; }
     if (--mDivider == 0) {
         mDivider = mInitialAmplitude;
-        if (--mCurrentAmplitude == 0)
-            mCurrentAmplitude = (mNoteLength != 0) ? mInitialAmplitude : 0;
+        if (--mCurrentAmplitude == 0) {
+            if (mNoteLength != 0 && !mIsLooping) {
+                mCurrentAmplitude = MAX_AMPLITUDE;
+            } else {
+                this->setEnabled(false);
+            }
+        }
         mRealAmplitude = mCurrentAmplitude / MAX_AMPLITUDE;
     }
 }
@@ -220,10 +225,8 @@ void APUPulse::setSweepPeriod(const Byte& period) {
 
 void APUPulse::updateSweep(void) {
     //the sweep unit mutes the oscillator, even when it's not enabled
-    if (mFrequency < 8 || mFrequency > 0x7FF) {
+    if (mFrequency < 8 || mFrequency > 0x7FF)
         this->setAmplitude(0);
-        mIsEnabled = false;
-    }
 
     if (!mIsEnabled || !mIsSweeping || mSweepClock == 0) { return; }
     else if (--mSweepClock) { return; }

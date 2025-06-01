@@ -12,6 +12,7 @@ NES::NES(Cartridge& cartridge) :
 {
 	mCpu.boot(mCpuBus); 
 	mPpu.boot(mPpuBus, mWindow);
+	mApu.setCpuBus(&mCpuBus);
 }
 
 NES::~NES(void) {
